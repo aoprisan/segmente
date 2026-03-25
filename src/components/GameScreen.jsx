@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import DrawingCanvas from "./DrawingCanvas";
 
 const CAT_LABELS = {
@@ -35,6 +35,15 @@ const CAT_COLORS = {
   },
 };
 
+const MOBILE_BREAKPOINT = 640;
+
+function getIsMobileViewport() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return window.innerWidth < MOBILE_BREAKPOINT;
+}
+
 export default function GameScreen({
   problems,
   category,
@@ -48,11 +57,41 @@ export default function GameScreen({
   const [feedback, setFeedback] = useState(null); // null | 'correct' | 'wrong'
   const [showHint, setShowHint] = useState(false);
   const [showSteps, setShowSteps] = useState(false);
+  const [isMobile, setIsMobile] = useState(getIsMobileViewport);
+  const [showProblemDetails, setShowProblemDetails] = useState(
+    !getIsMobileViewport(),
+  );
   const canvasRef = useRef(null);
 
   const problem = problems[index];
   const total = problems.length;
   const catColor = CAT_COLORS[category] || CAT_COLORS.mixt;
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(getIsMobileViewport());
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    setShowProblemDetails(!isMobile);
+  }, [index, isMobile]);
+
+  useEffect(() => {
+    if (!isMobile) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      canvasRef.current?.scrollIntoView({
+        behavior: index === 0 ? "auto" : "smooth",
+        block: "start",
+      });
+    }, 140);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [index, isMobile]);
 
   function handleCheck() {
     const val = parseInt(answer, 10);
@@ -86,48 +125,102 @@ export default function GameScreen({
   const isAnswered = feedback === "correct" || feedback === "wrong";
 
   return (
-    <div className="space-y-4 px-1 pb-6">
-      <section className="studio-panel px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
-              Scor {score}
-            </span>
-            <span className="status-chip bg-white/80 text-slate-500">
-              Problema {index + 1} din {total}
-            </span>
+    <div className="space-y-3 px-1 pb-4 sm:space-y-4 sm:pb-6">
+      {isMobile ? (
+        <section className="studio-panel px-4 py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
+                Scor {score}
+              </span>
+              <span className="status-chip bg-white/80 text-slate-500">
+                Problema {index + 1} din {total}
+              </span>
+            </div>
+            <button
+              onClick={onHome}
+              className="utility-pill studio-button text-xs"
+            >
+              Ieși
+            </button>
           </div>
-          <button
-            onClick={onHome}
-            className="utility-pill studio-button text-xs"
-          >
-            Ieși
-          </button>
-        </div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#EEE5D4]">
-          <div
-            className={`h-full rounded-full ${catColor.bg} transition-all duration-500`}
-            style={{ width: `${((index + (isAnswered ? 1 : 0)) / total) * 100}%` }}
-          />
-        </div>
-      </section>
 
-      <section className="paper-panel px-5 py-5">
-        <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${catColor.soft} ${catColor.text}`}>
-          {CAT_LABELS[problem.category] || CAT_LABELS[category]}
-        </span>
-        <p className="mt-5 text-sm font-semibold leading-6 text-slate-600">
-          {problem.text}
-        </p>
-        <div className={`mt-4 rounded-[22px] px-4 py-4 ${catColor.soft}`}>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-            Întrebarea
-          </p>
-          <p className={`mt-1 text-lg font-black leading-snug ${catColor.text}`}>
-            {problem.question}
-          </p>
-        </div>
-      </section>
+          <div className="mt-3 rounded-[24px] bg-white/72 px-4 py-4 shadow-[inset_0_0_0_1px_rgba(232,218,192,0.68)]">
+            <div className="flex items-center justify-between gap-3">
+              <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${catColor.soft} ${catColor.text}`}>
+                {CAT_LABELS[problem.category] || CAT_LABELS[category]}
+              </span>
+              <button
+                onClick={() => setShowProblemDetails((current) => !current)}
+                className={`text-xs font-black ${catColor.text}`}
+              >
+                {showProblemDetails ? "Ascunde enunțul" : "Vezi enunțul"}
+              </button>
+            </div>
+
+            <p className={`mt-3 text-lg font-black leading-snug ${catColor.text}`}>
+              {problem.question}
+            </p>
+
+            {showProblemDetails && (
+              <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                {problem.text}
+              </p>
+            )}
+          </div>
+
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#EEE5D4]">
+            <div
+              className={`h-full rounded-full ${catColor.bg} transition-all duration-500`}
+              style={{ width: `${((index + (isAnswered ? 1 : 0)) / total) * 100}%` }}
+            />
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="studio-panel px-4 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
+                  Scor {score}
+                </span>
+                <span className="status-chip bg-white/80 text-slate-500">
+                  Problema {index + 1} din {total}
+                </span>
+              </div>
+              <button
+                onClick={onHome}
+                className="utility-pill studio-button text-xs"
+              >
+                Ieși
+              </button>
+            </div>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#EEE5D4]">
+              <div
+                className={`h-full rounded-full ${catColor.bg} transition-all duration-500`}
+                style={{ width: `${((index + (isAnswered ? 1 : 0)) / total) * 100}%` }}
+              />
+            </div>
+          </section>
+
+          <section className="paper-panel px-5 py-5">
+            <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${catColor.soft} ${catColor.text}`}>
+              {CAT_LABELS[problem.category] || CAT_LABELS[category]}
+            </span>
+            <p className="mt-5 text-sm font-semibold leading-6 text-slate-600">
+              {problem.text}
+            </p>
+            <div className={`mt-4 rounded-[22px] px-4 py-4 ${catColor.soft}`}>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Întrebarea
+              </p>
+              <p className={`mt-1 text-lg font-black leading-snug ${catColor.text}`}>
+                {problem.question}
+              </p>
+            </div>
+          </section>
+        </>
+      )}
 
       <DrawingCanvas ref={canvasRef} problem={problem} />
 
