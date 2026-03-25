@@ -95,7 +95,6 @@ function getLabelValue(labels, targetType, targetId) {
 }
 
 const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
-  const sectionRef = useRef(null);
   const canvasRef = useRef(null);
   const historyRef = useRef([]);
   const nextIdRef = useRef(1);
@@ -178,7 +177,6 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
 
   useImperativeHandle(ref, () => ({
     clear: clearCanvasState,
-    scrollIntoView: (options) => sectionRef.current?.scrollIntoView(options),
   }));
 
   const resize = useCallback(() => {
@@ -576,7 +574,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
   const colorKeys = ["blue", "coral", "green", "teal", "purple"];
 
   return (
-    <div ref={sectionRef} className="space-y-3 scroll-mt-3">
+    <div className="space-y-3">
       <section className="studio-panel overflow-hidden px-3 py-3">
         <div className="flex items-start justify-between gap-3 px-1 pb-3">
           <div>
