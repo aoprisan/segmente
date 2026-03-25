@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import DrawingCanvas from "./DrawingCanvas";
+import { buildSessionResult } from "../utils/gamification";
 
 const CAT_LABELS = {
   suma: "Suma",
@@ -47,22 +48,31 @@ function getIsMobileViewport() {
 export default function GameScreen({
   problems,
   category,
+  sessionMode = "standard",
+  sessionId = null,
+  sessionLabel = null,
   onFinish,
   onHome,
 }) {
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
   const scoreRef = useRef(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const currentStreakRef = useRef(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const bestStreakRef = useRef(0);
   const [answer, setAnswer] = useState("");
   const [feedback, setFeedback] = useState(null); // null | 'correct' | 'wrong'
   const [showHint, setShowHint] = useState(false);
   const [showSteps, setShowSteps] = useState(false);
+  const [hintedProblems, setHintedProblems] = useState([]);
   const [isMobile, setIsMobile] = useState(getIsMobileViewport);
   const canvasRef = useRef(null);
 
   const problem = problems[index];
   const total = problems.length;
   const catColor = CAT_COLORS[category] || CAT_COLORS.mixt;
+  const usedHintOnCurrentProblem = hintedProblems.includes(index);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(getIsMobileViewport());
@@ -81,15 +91,34 @@ export default function GameScreen({
       setFeedback("correct");
       scoreRef.current += 1;
       setScore(scoreRef.current);
+      currentStreakRef.current += 1;
+      setCurrentStreak(currentStreakRef.current);
+      if (currentStreakRef.current > bestStreakRef.current) {
+        bestStreakRef.current = currentStreakRef.current;
+        setBestStreak(bestStreakRef.current);
+      }
     } else {
       setFeedback("wrong");
+      currentStreakRef.current = 0;
+      setCurrentStreak(0);
     }
     setShowSteps(true);
   }
 
   function handleNext() {
     if (index + 1 >= total) {
-      onFinish(scoreRef.current, total);
+      onFinish(
+        buildSessionResult({
+          score: scoreRef.current,
+          total,
+          hintsUsed: hintedProblems.length,
+          bestStreak: bestStreakRef.current,
+          category,
+          mode: sessionMode,
+          sessionId,
+          sessionLabel,
+        }),
+      );
       return;
     }
     setIndex((i) => i + 1);
@@ -98,6 +127,16 @@ export default function GameScreen({
     setShowHint(false);
     setShowSteps(false);
     canvasRef.current?.clear();
+  }
+
+  function handleShowHint() {
+    setShowHint(true);
+    setHintedProblems((prev) => {
+      if (prev.includes(index)) {
+        return prev;
+      }
+      return [...prev, index];
+    });
   }
 
   const isAnswered = feedback === "correct" || feedback === "wrong";
@@ -112,8 +151,16 @@ export default function GameScreen({
                 Scor {score}
               </span>
               <span className="status-chip bg-white/80 text-slate-500">
+                Șir {currentStreak}
+              </span>
+              <span className="status-chip bg-white/80 text-slate-500">
                 Problema {index + 1} din {total}
               </span>
+              {sessionMode === "daily" && (
+                <span className="status-chip bg-kid-amber-light text-kid-amber-dark">
+                  Provocarea zilei
+                </span>
+              )}
             </div>
             <button
               onClick={onHome}
@@ -148,15 +195,23 @@ export default function GameScreen({
         <>
           <section className="studio-panel px-4 py-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
-                  Scor {score}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
+                Scor {score}
+              </span>
+              <span className="status-chip bg-white/80 text-slate-500">
+                Șir {currentStreak}
+              </span>
+              <span className="status-chip bg-white/80 text-slate-500">
+                Problema {index + 1} din {total}
+              </span>
+              {sessionMode === "daily" && (
+                <span className="status-chip bg-kid-amber-light text-kid-amber-dark">
+                  Provocarea zilei
                 </span>
-                <span className="status-chip bg-white/80 text-slate-500">
-                  Problema {index + 1} din {total}
-                </span>
-              </div>
-              <button
+              )}
+            </div>
+            <button
                 onClick={onHome}
                 className="utility-pill studio-button text-xs"
               >
@@ -175,6 +230,11 @@ export default function GameScreen({
             <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${catColor.soft} ${catColor.text}`}>
               {CAT_LABELS[problem.category] || CAT_LABELS[category]}
             </span>
+            {sessionLabel && (
+              <p className="mt-3 text-[11px] font-black uppercase tracking-[0.18em] text-kid-amber-dark">
+                {sessionLabel}
+              </p>
+            )}
             <p className="mt-5 text-sm font-semibold leading-6 text-slate-600">
               {problem.text}
             </p>
@@ -211,11 +271,11 @@ export default function GameScreen({
                 Răspunsul tău
               </p>
               <p className="mt-1 text-sm font-semibold text-slate-500">
-                Scrie rezultatul în centimetri.
+              Scrie rezultatul în centimetri.
               </p>
             </div>
             <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
-              cm
+              Indicii {hintedProblems.length}
             </span>
           </div>
 
@@ -241,7 +301,7 @@ export default function GameScreen({
 
           <div className="mt-4 grid grid-cols-2 gap-2">
             <button
-              onClick={() => setShowHint(true)}
+              onClick={handleShowHint}
               className={`action-secondary studio-button border border-[var(--color-board-line)] bg-white/90 text-[var(--color-board-ink)] ${showHint ? `${catColor.soft} ${catColor.text} ${catColor.border}` : ""}`}
             >
               Indiciu
@@ -253,6 +313,10 @@ export default function GameScreen({
               Verifică
             </button>
           </div>
+
+          <p className="mt-3 text-center text-xs font-semibold text-slate-400">
+            Indiciile te ajută, dar pot reduce stelele finale.
+          </p>
         </section>
       )}
 
@@ -263,6 +327,11 @@ export default function GameScreen({
           </p>
           <p className="mt-2 text-xl font-black text-kid-green-dark">
             Bravo! Răspuns corect!
+          </p>
+          <p className="mt-2 text-sm font-semibold text-kid-green-dark">
+            {usedHintOnCurrentProblem
+              ? "Ai găsit soluția cu ajutorul indiciului."
+              : "Ai rezolvat curat, fără indiciu la această problemă."}
           </p>
         </section>
       )}
@@ -301,6 +370,14 @@ export default function GameScreen({
 
       {isAnswered && (
         <section className="studio-panel px-3 py-3">
+          <div className="mb-3 flex flex-wrap gap-2">
+            <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
+              Șir maxim {bestStreak}
+            </span>
+            <span className="status-chip bg-white/80 text-slate-500">
+              Indicii folosite {hintedProblems.length}
+            </span>
+          </div>
           <button
             onClick={handleNext}
             className="action-primary studio-button w-full bg-[var(--color-board-ink)] text-white"

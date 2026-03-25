@@ -2,32 +2,98 @@ import { useState, useCallback } from "react";
 import MenuScreen from "./components/MenuScreen";
 import GameScreen from "./components/GameScreen";
 import ResultsScreen from "./components/ResultsScreen";
-import { generateSession } from "./utils/problems";
+import { createSeededRng, generateSession } from "./utils/problems";
+import {
+  applySessionProgress,
+  getBestCategory,
+  getTodayChallengeKey,
+  isDailyChallengeComplete,
+  loadProgress,
+  saveProgress,
+} from "./utils/gamification";
 
 export default function App() {
   const [screen, setScreen] = useState("menu"); // menu | game | results
-  const [category, setCategory] = useState("suma");
-  const [problems, setProblems] = useState([]);
-  const [finalScore, setFinalScore] = useState(0);
-  const [finalTotal, setFinalTotal] = useState(5);
+  const [sessionConfig, setSessionConfig] = useState(null);
+  const [finalResult, setFinalResult] = useState(null);
+  const [progress, setProgress] = useState(loadProgress);
+  const [gameKey, setGameKey] = useState(0);
 
-  const startGame = useCallback((cat) => {
-    setCategory(cat);
-    setProblems(generateSession(cat, 5));
+  const dailyChallengeId = getTodayChallengeKey();
+  const bestCategory = getBestCategory(progress);
+  const dailyChallenge = {
+    id: dailyChallengeId,
+    completed: isDailyChallengeComplete(progress, dailyChallengeId),
+  };
+
+  const openSession = useCallback((nextSessionConfig) => {
+    setSessionConfig(nextSessionConfig);
     setScreen("game");
+    setGameKey((value) => value + 1);
   }, []);
 
-  const handleFinish = useCallback((score, total) => {
-    setFinalScore(score);
-    setFinalTotal(total);
+  const startCategoryGame = useCallback((cat) => {
+    openSession({
+      category: cat,
+      mode: "standard",
+      sessionId: null,
+      sessionLabel: null,
+      problems: generateSession(cat, 5),
+    });
+  }, [openSession]);
+
+  const startDailyChallenge = useCallback(() => {
+    const sessionId = getTodayChallengeKey();
+    const rng = createSeededRng(sessionId);
+
+    openSession({
+      category: "mixt",
+      mode: "daily",
+      sessionId,
+      sessionLabel: "Provocarea zilei",
+      problems: generateSession("mixt", 5, rng),
+    });
+  }, [openSession]);
+
+  const handleFinish = useCallback((sessionResult) => {
+    const appliedResult = applySessionProgress(progress, sessionResult);
+    setProgress(appliedResult.progress);
+    saveProgress(appliedResult.progress);
+    setFinalResult({
+      ...sessionResult,
+      sessionAchievements: appliedResult.sessionAchievements,
+      newlyUnlockedBadges: appliedResult.newlyUnlockedBadges,
+      dailyBonusAwarded: appliedResult.dailyBonusAwarded,
+      totalStarsAdded: appliedResult.totalStarsAdded,
+    });
     setScreen("results");
-  }, []);
+  }, [progress]);
 
   const goHome = useCallback(() => setScreen("menu"), []);
 
   const replay = useCallback(() => {
-    startGame(category);
-  }, [category, startGame]);
+    setSessionConfig((currentSession) => {
+      if (!currentSession) {
+        return currentSession;
+      }
+
+      if (currentSession.mode === "daily") {
+        const rng = createSeededRng(currentSession.sessionId || getTodayChallengeKey());
+        return {
+          ...currentSession,
+          problems: generateSession(currentSession.category, 5, rng),
+        };
+      }
+
+      return {
+        ...currentSession,
+        problems: generateSession(currentSession.category, 5),
+      };
+    });
+
+    setScreen("game");
+    setGameKey((value) => value + 1);
+  }, []);
 
   const isGameScreen = screen === "game";
 
@@ -45,22 +111,32 @@ export default function App() {
         </header>
 
         <main className="relative">
-          {screen === "menu" && <MenuScreen onStart={startGame} />}
+          {screen === "menu" && (
+            <MenuScreen
+              onStart={startCategoryGame}
+              onStartDaily={startDailyChallenge}
+              progress={progress}
+              bestCategory={bestCategory}
+              dailyChallenge={dailyChallenge}
+            />
+          )}
 
-          {screen === "game" && (
+          {screen === "game" && sessionConfig && (
             <GameScreen
-              key={problems[0]?.text}
-              problems={problems}
-              category={category}
+              key={gameKey}
+              problems={sessionConfig.problems}
+              category={sessionConfig.category}
+              sessionMode={sessionConfig.mode}
+              sessionId={sessionConfig.sessionId}
+              sessionLabel={sessionConfig.sessionLabel}
               onFinish={handleFinish}
               onHome={goHome}
             />
           )}
 
-          {screen === "results" && (
+          {screen === "results" && finalResult && (
             <ResultsScreen
-              score={finalScore}
-              total={finalTotal}
+              result={finalResult}
               onHome={goHome}
               onReplay={replay}
             />

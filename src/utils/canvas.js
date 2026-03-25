@@ -220,29 +220,36 @@ function getBraceLineY(brace) {
 export function drawBrace(ctx, brace) {
   const palette = COLORS[brace.color] || COLORS.teal;
   const lineY = getBraceLineY(brace);
-  const stemDirection = brace.position === "below" ? -1 : 1;
+  const stemDirection = brace.position === "below" ? 1 : -1;
+  const span = Math.max(brace.x2 - brace.x1, GRID_STEP);
+  const midX = (brace.x1 + brace.x2) / 2;
+  const shoulder = Math.min(Math.max(span * 0.18, 8), 18);
+  const notchWidth = Math.min(Math.max(span * 0.12, 6), 12);
+  const notchDepth = 10;
 
   ctx.save();
   ctx.strokeStyle = palette.stroke;
   ctx.lineWidth = 2.5;
   ctx.lineCap = "round";
+  ctx.lineJoin = "round";
   ctx.beginPath();
   ctx.moveTo(brace.x1, brace.anchorY);
-  ctx.lineTo(brace.x1, lineY);
-  ctx.lineTo(brace.x2, lineY);
-  ctx.lineTo(brace.x2, brace.anchorY);
-  ctx.stroke();
-
-  const midX = (brace.x1 + brace.x2) / 2;
-  ctx.beginPath();
-  ctx.moveTo(midX, lineY);
-  ctx.lineTo(midX, lineY + stemDirection * 10);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(midX - 5, lineY + stemDirection * 15);
-  ctx.lineTo(midX, lineY + stemDirection * 10);
-  ctx.lineTo(midX + 5, lineY + stemDirection * 15);
+  ctx.quadraticCurveTo(brace.x1, lineY, brace.x1 + shoulder, lineY);
+  ctx.lineTo(midX - shoulder, lineY);
+  ctx.quadraticCurveTo(
+    midX - notchWidth,
+    lineY,
+    midX,
+    lineY + stemDirection * notchDepth,
+  );
+  ctx.quadraticCurveTo(
+    midX + notchWidth,
+    lineY,
+    midX + shoulder,
+    lineY,
+  );
+  ctx.lineTo(brace.x2 - shoulder, lineY);
+  ctx.quadraticCurveTo(brace.x2, lineY, brace.x2, brace.anchorY);
   ctx.stroke();
   ctx.restore();
 }
@@ -396,12 +403,12 @@ export function redrawCanvas(ctx, width, height, options) {
   ctx.clearRect(0, 0, width, height);
   drawGrid(ctx, width, height);
   guides.forEach((guide) => drawGuideSegment(ctx, guide));
-  braces.forEach((brace) => drawBrace(ctx, brace));
   segments.forEach((segment) => {
     drawSegment(ctx, segment, { selected: segment.id === selectedSegmentId });
   });
   if (draftSegment) {
     drawSegment(ctx, draftSegment, { ghost: true });
   }
+  braces.forEach((brace) => drawBrace(ctx, brace));
   labels.forEach((label) => drawLabel(ctx, label, segments, braces));
 }

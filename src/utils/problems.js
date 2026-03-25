@@ -22,12 +22,35 @@ const OBJECTS = [
   { name: "un segment", short: "segmentul" },
 ];
 
-function pick(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
+function pick(arr, rng = Math.random) {
+  return arr[Math.floor(rng() * arr.length)];
 }
 
-function rand(min, max) {
-  return min + Math.floor(Math.random() * (max - min + 1));
+function rand(min, max, rng = Math.random) {
+  return min + Math.floor(rng() * (max - min + 1));
+}
+
+function createSeedHash(seedText) {
+  let hash = 1779033703 ^ seedText.length;
+
+  for (let i = 0; i < seedText.length; i += 1) {
+    hash = Math.imul(hash ^ seedText.charCodeAt(i), 3432918353);
+    hash = (hash << 13) | (hash >>> 19);
+  }
+
+  return hash >>> 0;
+}
+
+export function createSeededRng(seedInput) {
+  let state = createSeedHash(String(seedInput));
+
+  return function seededRandom() {
+    state += 0x6D2B79F5;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
 /**
@@ -37,18 +60,18 @@ function rand(min, max) {
  * `segments` is an array of { label, length, color } used to draw
  * a reference diagram on the canvas so kids know what to draw.
  */
-export function generateProblem(category) {
-  const [n1, n2] = pick(NAMES);
-  const obj = pick(OBJECTS);
+export function generateProblem(category, rng = Math.random) {
+  const [n1, n2] = pick(NAMES, rng);
+  const obj = pick(OBJECTS, rng);
 
   if (category === "mixt") {
     const cats = ["suma", "diferenta", "dublu"];
-    return generateProblem(pick(cats));
+    return generateProblem(pick(cats, rng), rng);
   }
 
   if (category === "suma") {
-    const a = rand(5, 45);
-    const b = rand(5, 40);
+    const a = rand(5, 45, rng);
+    const b = rand(5, 40, rng);
     return {
       category: "suma",
       text: `${n1} are ${obj.name} de ${a} cm. ${n2} are ${obj.name} de ${b} cm.`,
@@ -68,8 +91,8 @@ export function generateProblem(category) {
   }
 
   if (category === "diferenta") {
-    const big = rand(20, 50);
-    const small = rand(5, big - 3);
+    const big = rand(20, 50, rng);
+    const small = rand(5, big - 3, rng);
     return {
       category: "diferenta",
       text: `${n1} are ${obj.name} de ${big} cm. ${n2} are ${obj.name} de ${small} cm.`,
@@ -89,9 +112,9 @@ export function generateProblem(category) {
   }
 
   if (category === "dublu") {
-    const isDublu = Math.random() > 0.5;
+    const isDublu = rng() > 0.5;
     if (isDublu) {
-      const a = rand(5, 35);
+      const a = rand(5, 35, rng);
       return {
         category: "dublu",
         text: `${n1} are ${obj.name} de ${a} cm. ${n2} are ${obj.name} de două ori mai lungă.`,
@@ -109,7 +132,7 @@ export function generateProblem(category) {
         ],
       };
     } else {
-      const half = rand(5, 30);
+      const half = rand(5, 30, rng);
       const full = half * 2;
       return {
         category: "dublu",
@@ -131,12 +154,12 @@ export function generateProblem(category) {
   }
 
   // fallback
-  return generateProblem("suma");
+  return generateProblem("suma", rng);
 }
 
 /**
  * Generate a full game session (array of problems).
  */
-export function generateSession(category, count = 5) {
-  return Array.from({ length: count }, () => generateProblem(category));
+export function generateSession(category, count = 5, rng = Math.random) {
+  return Array.from({ length: count }, () => generateProblem(category, rng));
 }
