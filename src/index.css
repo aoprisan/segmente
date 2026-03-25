@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Nunito", sans-serif;
+  --font-body: "Nunito", sans-serif;
+
+  --color-kid-blue: #378ADD;
+  --color-kid-blue-light: #E6F1FB;
+  --color-kid-blue-dark: #185FA5;
+  --color-kid-coral: #D85A30;
+  --color-kid-coral-light: #FAECE7;
+  --color-kid-coral-dark: #993C1D;
+  --color-kid-green: #639922;
+  --color-kid-green-light: #EAF3DE;
+  --color-kid-green-dark: #3B6D11;
+  --color-kid-purple: #7F77DD;
+  --color-kid-purple-light: #EEEDFE;
+  --color-kid-purple-dark: #3C3489;
+  --color-kid-pink: #D4537E;
+  --color-kid-pink-light: #FBEAF0;
+  --color-kid-pink-dark: #72243E;
+  --color-kid-amber: #EF9F27;
+  --color-kid-amber-light: #FAEEDA;
+  --color-kid-amber-dark: #854F0B;
+  --color-kid-teal: #1D9E75;
+  --color-kid-teal-light: #E1F5EE;
+  --color-kid-teal-dark: #085041;
+  --color-kid-red: #E24B4A;
+  --color-kid-red-light: #FCEBEB;
+  --color-kid-red-dark: #A32D2D;
+
+  --color-canvas-bg: #FFFEF8;
+  --color-canvas-border: #EF9F27;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-body);
+  background: linear-gradient(135deg, #f8f7ff 0%, #fff8f0 50%, #f0faf5 100%);
+  min-height: 100dvh;
+}

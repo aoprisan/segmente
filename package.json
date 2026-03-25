@@ -1,0 +1,24 @@
+{
+  "name": "segmente-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Interactive math app for 3rd graders — probleme cu segmente",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["math", "education", "kids", "segments"],
+  "license": "MIT",
+  "dependencies": {
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "@vitejs/plugin-react": "^6.0.1",
+    "tailwindcss": "^4.2.2",
+    "vite": "^8.0.2"
+  }
+}
