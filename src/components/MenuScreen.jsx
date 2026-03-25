@@ -2,9 +2,10 @@ const categories = [
   {
     id: "suma",
     label: "Suma segmentelor",
-    color: "kid-blue",
     borderClass: "border-kid-blue",
+    lightClass: "bg-kid-blue-light",
     textClass: "text-kid-blue-dark",
+    description: "Adună două lungimi și găsește totalul.",
     icon: (
       <svg width="36" height="36" viewBox="0 0 36 36">
         <line x1="4" y1="18" x2="32" y2="18" stroke="#378ADD" strokeWidth="3" strokeLinecap="round" />
@@ -17,9 +18,10 @@ const categories = [
   {
     id: "diferenta",
     label: "Diferența segmentelor",
-    color: "kid-coral",
     borderClass: "border-kid-coral",
+    lightClass: "bg-kid-coral-light",
     textClass: "text-kid-coral-dark",
+    description: "Compară două segmente și află cu cât diferă.",
     icon: (
       <svg width="36" height="36" viewBox="0 0 36 36">
         <line x1="4" y1="13" x2="32" y2="13" stroke="#D85A30" strokeWidth="3" strokeLinecap="round" />
@@ -34,9 +36,10 @@ const categories = [
   {
     id: "dublu",
     label: "Dublul / jumătatea",
-    color: "kid-green",
     borderClass: "border-kid-green",
+    lightClass: "bg-kid-green-light",
     textClass: "text-kid-green-dark",
+    description: "Lucrează cu dublul și jumătatea segmentelor.",
     icon: (
       <svg width="36" height="36" viewBox="0 0 36 36">
         <line x1="4" y1="13" x2="18" y2="13" stroke="#639922" strokeWidth="3" strokeLinecap="round" />
@@ -49,9 +52,10 @@ const categories = [
   {
     id: "mixt",
     label: "Probleme mixte",
-    color: "kid-purple",
     borderClass: "border-kid-purple",
+    lightClass: "bg-kid-purple-light",
     textClass: "text-kid-purple-dark",
+    description: "Primești provocări din toate categoriile.",
     icon: (
       <svg width="36" height="36" viewBox="0 0 36 36">
         <line x1="4" y1="10" x2="32" y2="10" stroke="#7F77DD" strokeWidth="2.5" strokeLinecap="round" />
@@ -65,24 +69,42 @@ const categories = [
 
 export default function MenuScreen({ onStart }) {
   return (
-    <div className="px-4 pt-2 pb-8">
+    <div className="space-y-4 px-1 pb-6">
+      <section className="studio-panel px-5 py-5 text-left">
+        <span className="studio-kicker">Alege atelierul</span>
+        <h2 className="mt-3 text-2xl font-black text-[var(--color-board-ink)]">
+          Cu ce vrei să începi?
+        </h2>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+          Fiecare rundă are 5 probleme și spațiu pentru desen direct pe tablă.
+        </p>
+      </section>
+
       <div className="grid grid-cols-2 gap-3">
         {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => onStart(cat.id)}
-            className={`flex flex-col items-center rounded-2xl border-2 ${cat.borderClass} bg-white p-5 text-center transition-transform active:scale-95`}
+            className={`studio-panel studio-button flex min-h-[190px] flex-col items-start rounded-[26px] border p-4 text-left ${cat.borderClass}`}
           >
-            <span className="mb-2">{cat.icon}</span>
-            <span className={`text-sm font-bold ${cat.textClass}`}>
+            <span className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${cat.lightClass}`}>
+              {cat.icon}
+            </span>
+            <span className={`text-sm font-black ${cat.textClass}`}>
               {cat.label}
+            </span>
+            <span className="mt-2 text-xs font-semibold leading-5 text-slate-500">
+              {cat.description}
+            </span>
+            <span className={`mt-auto inline-flex rounded-full px-3 py-1 text-[11px] font-black ${cat.lightClass} ${cat.textClass}`}>
+              Începe
             </span>
           </button>
         ))}
       </div>
 
-      <p className="mt-6 text-center text-xs font-semibold text-gray-400">
-        Alege o categorie și rezolvă 5 probleme!
+      <p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+        Alege o categorie și rezolvă 5 probleme
       </p>
     </div>
   );

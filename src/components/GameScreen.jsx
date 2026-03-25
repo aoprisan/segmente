@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import DrawingCanvas from "./DrawingCanvas";
 
 const CAT_LABELS = {
@@ -9,10 +9,30 @@ const CAT_LABELS = {
 };
 
 const CAT_COLORS = {
-  suma: { bg: "bg-kid-blue", border: "border-kid-blue" },
-  diferenta: { bg: "bg-kid-coral", border: "border-kid-coral" },
-  dublu: { bg: "bg-kid-green", border: "border-kid-green" },
-  mixt: { bg: "bg-kid-purple", border: "border-kid-purple" },
+  suma: {
+    bg: "bg-kid-blue",
+    soft: "bg-kid-blue-light",
+    border: "border-kid-blue",
+    text: "text-kid-blue-dark",
+  },
+  diferenta: {
+    bg: "bg-kid-coral",
+    soft: "bg-kid-coral-light",
+    border: "border-kid-coral",
+    text: "text-kid-coral-dark",
+  },
+  dublu: {
+    bg: "bg-kid-green",
+    soft: "bg-kid-green-light",
+    border: "border-kid-green",
+    text: "text-kid-green-dark",
+  },
+  mixt: {
+    bg: "bg-kid-purple",
+    soft: "bg-kid-purple-light",
+    border: "border-kid-purple",
+    text: "text-kid-purple-dark",
+  },
 };
 
 export default function GameScreen({
@@ -66,135 +86,167 @@ export default function GameScreen({
   const isAnswered = feedback === "correct" || feedback === "wrong";
 
   return (
-    <div className="pb-8">
-      {/* Score bar */}
-      <div className="flex items-center justify-between px-5 py-2 text-xs font-bold text-gray-400">
-        <span>Scor: {score}</span>
-        <span>
-          Problema {index + 1}/{total}
-        </span>
-        <button
-          onClick={onHome}
-          className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-bold text-gray-400 transition-colors hover:text-gray-600"
-        >
-          Ieși
-        </button>
-      </div>
+    <div className="space-y-4 px-1 pb-6">
+      <section className="studio-panel px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
+              Scor {score}
+            </span>
+            <span className="status-chip bg-white/80 text-slate-500">
+              Problema {index + 1} din {total}
+            </span>
+          </div>
+          <button
+            onClick={onHome}
+            className="utility-pill studio-button text-xs"
+          >
+            Ieși
+          </button>
+        </div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[#EEE5D4]">
+          <div
+            className={`h-full rounded-full ${catColor.bg} transition-all duration-500`}
+            style={{ width: `${((index + (isAnswered ? 1 : 0)) / total) * 100}%` }}
+          />
+        </div>
+      </section>
 
-      {/* Progress bar */}
-      <div className="mx-4 mb-3 h-1.5 overflow-hidden rounded-full bg-gray-100">
-        <div
-          className={`h-full rounded-full ${catColor.bg} transition-all duration-500`}
-          style={{ width: `${((index + (isAnswered ? 1 : 0)) / total) * 100}%` }}
-        />
-      </div>
-
-      {/* Problem card */}
-      <div className={`relative mx-4 rounded-2xl border-2 ${catColor.border} bg-white p-5`}>
-        <span
-          className={`absolute -top-3 left-5 rounded-full ${catColor.bg} px-3 py-0.5 text-xs font-bold text-white`}
-        >
+      <section className="paper-panel px-5 py-5">
+        <span className={`inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] ${catColor.soft} ${catColor.text}`}>
           {CAT_LABELS[problem.category] || CAT_LABELS[category]}
         </span>
-        <p className="mt-1 text-base font-semibold leading-relaxed text-gray-800">
+        <p className="mt-5 text-sm font-semibold leading-6 text-slate-600">
           {problem.text}
         </p>
-        <p className="mt-2 text-sm font-bold text-kid-coral">
-          {problem.question}
-        </p>
-      </div>
+        <div className={`mt-4 rounded-[22px] px-4 py-4 ${catColor.soft}`}>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+            Întrebarea
+          </p>
+          <p className={`mt-1 text-lg font-black leading-snug ${catColor.text}`}>
+            {problem.question}
+          </p>
+        </div>
+      </section>
 
-      {/* Drawing canvas */}
       <DrawingCanvas ref={canvasRef} />
 
-      {/* Hint */}
       {showHint && (
-        <div className="mx-4 mt-2 rounded-xl border-2 border-kid-amber bg-kid-amber-light px-4 py-3 text-xs font-semibold text-kid-amber-dark">
-          {problem.hint}
-        </div>
+        <section className="rounded-[26px] border border-kid-amber bg-kid-amber-light px-4 py-4 shadow-[0_18px_38px_-30px_rgba(133,79,11,0.45)]">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-kid-amber-dark">
+            Indiciu
+          </p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-kid-amber-dark">
+            {problem.hint}
+          </p>
+        </section>
       )}
 
-      {/* Answer input */}
       {!isAnswered && (
-        <>
-          <div className="mx-4 mt-3 flex items-center gap-2">
-            <label className="text-sm font-bold text-gray-400">Răspuns:</label>
+        <section className="studio-panel px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Răspunsul tău
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-500">
+                Scrie rezultatul în centimetri.
+              </p>
+            </div>
+            <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
+              cm
+            </span>
+          </div>
+
+          <div className="mt-4 flex items-center gap-3">
             <input
               type="number"
               inputMode="numeric"
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
               placeholder="?"
-              className="flex-1 rounded-xl border-2 border-kid-purple bg-kid-purple-light px-4 py-2.5 text-center text-lg font-bold text-kid-purple-dark outline-none focus:border-kid-coral focus:bg-kid-coral-light focus:text-kid-coral-dark"
+              className={`h-14 flex-1 rounded-[22px] border border-[#DCCDB1] bg-[#FFFDF8] px-4 text-center text-2xl font-black ${catColor.text} outline-none transition focus:border-[var(--color-board-ink)] focus:bg-white`}
             />
-            <span className="text-sm font-bold text-gray-400">cm</span>
+            <div className="rounded-[22px] bg-[#F5EDDE] px-4 py-4 text-sm font-black text-slate-500">
+              cm
+            </div>
           </div>
 
           {feedback === "empty" && (
-            <p className="mx-4 mt-2 text-center text-xs font-bold text-kid-coral">
-              Scrie un număr în căsuță!
+            <p className="mt-3 text-center text-xs font-black text-kid-coral-dark">
+              Scrie un număr în căsuță.
             </p>
           )}
 
-          <div className="mx-4 mt-3 flex gap-2">
+          <div className="mt-4 grid grid-cols-2 gap-2">
             <button
               onClick={() => setShowHint(true)}
-              className="flex-1 rounded-xl border-2 border-kid-purple bg-white py-3 text-sm font-bold text-kid-purple transition-transform active:scale-95"
+              className={`action-secondary studio-button border border-[var(--color-board-line)] bg-white/90 text-[var(--color-board-ink)] ${showHint ? `${catColor.soft} ${catColor.text} ${catColor.border}` : ""}`}
             >
               Indiciu
             </button>
             <button
               onClick={handleCheck}
-              className="flex-1 rounded-xl border-2 border-kid-purple bg-kid-purple py-3 text-sm font-bold text-white transition-transform active:scale-95"
+              className={`action-primary studio-button ${catColor.bg} text-white`}
             >
               Verifică
             </button>
           </div>
-        </>
+        </section>
       )}
 
-      {/* Feedback */}
       {feedback === "correct" && (
-        <div className="mx-4 mt-3 rounded-2xl border-2 border-kid-green bg-kid-green-light px-5 py-4 text-center text-lg font-extrabold text-kid-green-dark">
-          Bravo! Răspuns corect!
-        </div>
+        <section className="rounded-[26px] border border-kid-green bg-kid-green-light px-5 py-4 shadow-[0_18px_38px_-30px_rgba(59,109,17,0.45)]">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-kid-green-dark">
+            Rezultat
+          </p>
+          <p className="mt-2 text-xl font-black text-kid-green-dark">
+            Bravo! Răspuns corect!
+          </p>
+        </section>
       )}
+
       {feedback === "wrong" && (
-        <div className="mx-4 mt-3 rounded-2xl border-2 border-kid-coral bg-kid-coral-light px-5 py-4 text-center">
-          <p className="text-lg font-extrabold text-kid-coral-dark">
+        <section className="rounded-[26px] border border-kid-coral bg-kid-coral-light px-5 py-4 shadow-[0_18px_38px_-30px_rgba(153,60,29,0.4)]">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-kid-coral-dark">
+            Rezultat
+          </p>
+          <p className="mt-2 text-xl font-black text-kid-coral-dark">
             Nu e corect.
           </p>
-          <p className="mt-1 text-sm font-bold text-kid-coral-dark">
-            Răspunsul este{" "}
-            <span className="text-kid-coral">{problem.answer} cm</span>
+          <p className="mt-2 text-sm font-semibold text-kid-coral-dark">
+            Răspunsul este <span className="font-black">{problem.answer} cm</span>
           </p>
-        </div>
+        </section>
       )}
 
-      {/* Steps */}
       {showSteps && (
-        <div className="mx-4 mt-2 rounded-xl border-2 border-kid-teal bg-kid-teal-light px-4 py-3">
-          <p className="mb-1 text-xs font-bold text-kid-teal-dark">
-            Rezolvare:
+        <section className="studio-panel px-4 py-4">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-kid-teal-dark">
+            Cum se rezolvă
           </p>
-          {problem.steps.map((step, i) => (
-            <p key={i} className="text-xs font-semibold text-kid-teal-dark">
-              {step}
-            </p>
-          ))}
-        </div>
+          <div className="mt-3 space-y-2">
+            {problem.steps.map((step, i) => (
+              <p
+                key={i}
+                className="rounded-[18px] bg-kid-teal-light px-3 py-2 text-sm font-semibold text-kid-teal-dark"
+              >
+                {i + 1}. {step}
+              </p>
+            ))}
+          </div>
+        </section>
       )}
 
-      {/* Next button */}
       {isAnswered && (
-        <div className="mx-4 mt-3">
+        <section className="studio-panel px-3 py-3">
           <button
             onClick={handleNext}
-            className="w-full rounded-xl bg-kid-teal py-3.5 text-sm font-bold text-white transition-transform active:scale-95"
+            className="action-primary studio-button w-full bg-[var(--color-board-ink)] text-white"
           >
             {index + 1 >= total ? "Vezi rezultatele" : "Problema următoare"}
           </button>
-        </div>
+        </section>
       )}
     </div>
   );

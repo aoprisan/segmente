@@ -25,9 +25,9 @@ export function getPointerPos(canvas, e) {
 
 export function drawGrid(ctx, width, height) {
   ctx.save();
-  ctx.strokeStyle = "rgba(0,0,0,0.05)";
-  ctx.lineWidth = 0.5;
-  const step = 20;
+  ctx.strokeStyle = "rgba(184, 146, 74, 0.12)";
+  ctx.lineWidth = 0.75;
+  const step = 24;
   for (let x = 0; x <= width; x += step) {
     ctx.beginPath();
     ctx.moveTo(x, 0);

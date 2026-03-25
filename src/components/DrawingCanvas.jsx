@@ -25,8 +25,8 @@ const DrawingCanvas = forwardRef(function DrawingCanvas(_, ref) {
     if (!canvas) return;
     const parent = canvas.parentElement;
     const dpr = window.devicePixelRatio || 1;
-    const w = parent.clientWidth - 16;
-    const h = 220;
+    const w = parent.clientWidth;
+    const h = window.innerWidth < 420 ? 260 : 300;
     canvas.style.width = w + "px";
     canvas.style.height = h + "px";
     canvas.width = w * dpr;
@@ -115,69 +115,98 @@ const DrawingCanvas = forwardRef(function DrawingCanvas(_, ref) {
   const colorKeys = ["blue", "coral", "green"];
 
   return (
-    <div className="mt-3">
-      {/* Canvas */}
-      <div className="mx-4 rounded-2xl border-2 border-dashed border-kid-amber bg-canvas-bg p-2">
-        <canvas
-          ref={canvasRef}
-          className="block w-full rounded-xl"
-          style={{ touchAction: "none" }}
-          onPointerDown={handleStart}
-          onPointerMove={handleMove}
-          onPointerUp={handleEnd}
-        />
-      </div>
+    <div className="space-y-3">
+      <section className="studio-panel overflow-hidden px-3 py-3">
+        <div className="flex items-start justify-between gap-3 px-1 pb-3">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+              Tabla de lucru
+            </p>
+            <h3 className="mt-1 text-lg font-black text-[var(--color-board-ink)]">
+              Desenează segmentele
+            </h3>
+          </div>
+          <span className="status-chip bg-kid-amber-light text-kid-amber-dark">
+            Trasează cu degetul
+          </span>
+        </div>
 
-      {/* Toolbar */}
-      <div className="flex flex-wrap justify-center gap-1.5 px-4 py-2">
-        {toolKeys.map((t) => (
-          <button
-            key={t}
-            onClick={() => setActiveTool(t)}
-            className={`rounded-xl border-2 px-3 py-1.5 text-xs font-bold transition-all ${
-              activeTool === t
-                ? "border-kid-purple bg-kid-purple-light text-kid-purple-dark"
-                : "border-gray-200 bg-white text-gray-600"
-            }`}
-          >
-            {TOOLS[t].label}
+        <div className="workspace-board">
+          <div className="workspace-grid">
+            <canvas
+              ref={canvasRef}
+              className="relative z-[1] block w-full rounded-[22px]"
+              style={{ touchAction: "none" }}
+              onPointerDown={handleStart}
+              onPointerMove={handleMove}
+              onPointerUp={handleEnd}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="studio-panel px-3 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+            Unelte
+          </p>
+          <p className="text-xs font-semibold text-slate-500">
+            Atinge, trasează, etichetează
+          </p>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          {toolKeys.map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveTool(t)}
+              data-active={activeTool === t}
+              className="tool-pill studio-button text-sm"
+            >
+              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
+                activeTool === t
+                  ? "bg-white text-[var(--color-board-ink)]"
+                  : "bg-[#F4EDDF] text-slate-500"
+              }`}
+              >
+                {TOOLS[t].icon}
+              </span>
+              <span>{TOOLS[t].label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--color-board-line)] pt-3">
+          {colorKeys.map((c) => (
+            <button
+              key={c}
+              onClick={() => setActiveColor(c)}
+              data-active={activeColor === c}
+              className="color-pill studio-button text-sm"
+              style={{
+                color: COLORS[c].stroke,
+                backgroundColor:
+                  activeColor === c ? COLORS[c].fill : "rgba(255,255,255,0.78)",
+              }}
+            >
+              <span
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: COLORS[c].stroke }}
+              />
+              <span>{COLORS[c].label}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-2 border-t border-[var(--color-board-line)] pt-3">
+          <button onClick={undo} className="utility-pill studio-button text-sm">
+            Anulează
           </button>
-        ))}
-
-        <div className="mx-1 w-px bg-gray-200" />
-
-        {colorKeys.map((c) => (
-          <button
-            key={c}
-            onClick={() => setActiveColor(c)}
-            className="rounded-xl border-2 px-3 py-1.5 text-xs font-bold transition-all"
-            style={{
-              borderColor:
-                activeColor === c ? COLORS[c].stroke : "transparent",
-              backgroundColor:
-                activeColor === c ? COLORS[c].fill : "transparent",
-              color: COLORS[c].stroke,
-            }}
-          >
-            {COLORS[c].label}
+          <button onClick={clear} className="utility-pill studio-button text-sm">
+            Șterge tot
           </button>
-        ))}
-
-        <div className="mx-1 w-px bg-gray-200" />
-
-        <button
-          onClick={undo}
-          className="rounded-xl border-2 border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-500"
-        >
-          Anulează
-        </button>
-        <button
-          onClick={clear}
-          className="rounded-xl border-2 border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-500"
-        >
-          Șterge tot
-        </button>
-      </div>
+        </div>
+      </section>
     </div>
   );
 });

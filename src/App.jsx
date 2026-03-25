@@ -30,37 +30,41 @@ export default function App() {
   }, [category, startGame]);
 
   return (
-    <div className="mx-auto max-w-[480px] min-h-dvh">
-      {/* Header */}
-      <header className="pt-6 pb-2 text-center">
-        <h1 className="text-xl font-extrabold tracking-tight text-kid-purple">
-          Probleme cu segmente
-        </h1>
-        <p className="mt-0.5 text-xs font-semibold text-gray-400">
-          Clasa a III-a — Desenează și rezolvă!
-        </p>
-      </header>
+    <div className="mx-auto min-h-dvh max-w-[560px] px-3 py-4 sm:px-4 sm:py-6">
+      <div className="studio-shell px-4 py-5 sm:px-5">
+        <header className="relative px-1 pb-5 text-center">
+          <span className="studio-kicker">Matematica vizuală</span>
+          <h1 className="mt-3 text-[2rem] font-black tracking-tight text-[var(--color-board-ink)] sm:text-[2.25rem]">
+            Probleme cu segmente
+          </h1>
+          <p className="mt-2 text-sm font-semibold text-slate-500">
+            Clasa a III-a • Desenează, compară și rezolvă
+          </p>
+        </header>
 
-      {screen === "menu" && <MenuScreen onStart={startGame} />}
+        <main className="relative">
+          {screen === "menu" && <MenuScreen onStart={startGame} />}
 
-      {screen === "game" && (
-        <GameScreen
-          key={problems[0]?.text}
-          problems={problems}
-          category={category}
-          onFinish={handleFinish}
-          onHome={goHome}
-        />
-      )}
+          {screen === "game" && (
+            <GameScreen
+              key={problems[0]?.text}
+              problems={problems}
+              category={category}
+              onFinish={handleFinish}
+              onHome={goHome}
+            />
+          )}
 
-      {screen === "results" && (
-        <ResultsScreen
-          score={finalScore}
-          total={finalTotal}
-          onHome={goHome}
-          onReplay={replay}
-        />
-      )}
+          {screen === "results" && (
+            <ResultsScreen
+              score={finalScore}
+              total={finalTotal}
+              onHome={goHome}
+              onReplay={replay}
+            />
+          )}
+        </main>
+      </div>
     </div>
   );
 }

@@ -70,33 +70,49 @@ export default function ResultsScreen({ score, total, onHome, onReplay }) {
   };
 
   return (
-    <div className="px-4 pt-8 pb-8 text-center">
-      <div className="mb-3 flex justify-center">{faces[emoji]}</div>
+    <div className="space-y-4 px-1 pt-2 pb-6 text-center">
+      <section className="paper-panel px-5 py-6">
+        <div className="mb-4 flex justify-center">{faces[emoji]}</div>
+        <span className="studio-kicker">Rezumatul sesiunii</span>
+        <h2 className="mt-4 text-2xl font-black text-[var(--color-board-ink)]">
+          {title}
+        </h2>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+          {subtitle}
+        </p>
+      </section>
 
-      <h2 className="text-2xl font-extrabold text-kid-purple">{title}</h2>
-      <p className="mt-1 text-sm font-semibold text-gray-400">{subtitle}</p>
-
-      <div className="mx-auto mt-6 flex max-w-[240px] gap-3">
-        <div className="flex-1 rounded-2xl bg-kid-green-light px-4 py-4 text-center">
-          <div className="text-3xl font-black text-kid-green-dark">{score}</div>
-          <div className="text-xs font-bold text-kid-green-dark">Corecte</div>
+      <section className="studio-panel px-4 py-4">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-[24px] bg-kid-green-light px-4 py-5 text-center">
+            <div className="text-3xl font-black text-kid-green-dark">{score}</div>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-kid-green-dark">
+              Corecte
+            </div>
+          </div>
+          <div className="rounded-[24px] bg-kid-coral-light px-4 py-5 text-center">
+            <div className="text-3xl font-black text-kid-coral-dark">{wrong}</div>
+            <div className="text-xs font-black uppercase tracking-[0.18em] text-kid-coral-dark">
+              Greșite
+            </div>
+          </div>
         </div>
-        <div className="flex-1 rounded-2xl bg-kid-coral-light px-4 py-4 text-center">
-          <div className="text-3xl font-black text-kid-coral-dark">{wrong}</div>
-          <div className="text-xs font-bold text-kid-coral-dark">Greșite</div>
-        </div>
-      </div>
+        <p className="mt-4 text-sm font-semibold text-slate-500">
+          Ai rezolvat <span className="font-black text-[var(--color-board-ink)]">{score}</span> din{" "}
+          <span className="font-black text-[var(--color-board-ink)]">{total}</span> probleme.
+        </p>
+      </section>
 
-      <div className="mx-auto mt-8 flex max-w-[320px] flex-col gap-2">
+      <div className="space-y-2">
         <button
           onClick={onHome}
-          className="w-full rounded-xl bg-kid-purple py-3.5 text-sm font-bold text-white transition-transform active:scale-95"
+          className="action-primary studio-button w-full bg-kid-purple text-white"
         >
           Alege altă categorie
         </button>
         <button
           onClick={onReplay}
-          className="w-full rounded-xl border-2 border-kid-purple bg-white py-3 text-sm font-bold text-kid-purple transition-transform active:scale-95"
+          className="action-secondary studio-button w-full border border-[var(--color-board-line)] bg-white/90 text-kid-purple-dark"
         >
           Joacă din nou
         </button>
