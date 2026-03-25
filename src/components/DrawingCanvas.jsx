@@ -102,6 +102,16 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
   const longPressTimerRef = useRef(null);
   const longPressTriggeredRef = useRef(false);
   const labelInputRef = useRef(null);
+  const renderFrameRef = useRef({
+    boardSize: { w: 0, h: 0 },
+    guides: [],
+    segments: [],
+    braces: [],
+    labels: [],
+    draftSegment: null,
+    selectedSegmentId: null,
+  });
+  const repaintFrameRef = useRef(null);
   const [canvasState, setCanvasState] = useState(createEmptyCanvasState());
   const [boardSize, setBoardSize] = useState({ w: 0, h: 0 });
   const [draftSegment, setDraftSegment] = useState(null);
@@ -128,6 +138,43 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
     nextIdRef.current += 1;
     return id;
   }
+
+  const redrawCurrentFrame = useCallback(() => {
+    const ctx = canvasRef.current?.getContext("2d");
+    const {
+      boardSize: frameBoardSize,
+      guides,
+      segments: frameSegments,
+      braces: frameBraces,
+      labels: frameLabels,
+      draftSegment: frameDraftSegment,
+      selectedSegmentId: frameSelectedSegmentId,
+    } = renderFrameRef.current;
+
+    if (!ctx || !frameBoardSize.w || !frameBoardSize.h) {
+      return;
+    }
+
+    redrawCanvas(ctx, frameBoardSize.w, frameBoardSize.h, {
+      guides,
+      segments: frameSegments,
+      braces: frameBraces,
+      labels: frameLabels,
+      draftSegment: frameDraftSegment,
+      selectedSegmentId: frameSelectedSegmentId,
+    });
+  }, []);
+
+  const scheduleRedraw = useCallback(() => {
+    if (repaintFrameRef.current) {
+      window.cancelAnimationFrame(repaintFrameRef.current);
+    }
+
+    repaintFrameRef.current = window.requestAnimationFrame(() => {
+      repaintFrameRef.current = null;
+      redrawCurrentFrame();
+    });
+  }, [redrawCurrentFrame]);
 
   function clearLongPressTimer() {
     if (longPressTimerRef.current) {
@@ -189,6 +236,7 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
     const dpr = window.devicePixelRatio || 1;
     const w = parent.clientWidth;
     const h = window.innerWidth < 420 ? 260 : 300;
+    const nextBoardSize = { w, h };
 
     canvas.style.width = `${w}px`;
     canvas.style.height = `${h}px`;
@@ -197,32 +245,37 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
 
     const ctx = canvas.getContext("2d");
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    setBoardSize((prev) => (prev.w === w && prev.h === h ? prev : { w, h }));
-  }, []);
+    renderFrameRef.current = {
+      ...renderFrameRef.current,
+      boardSize: nextBoardSize,
+    };
+    redrawCurrentFrame();
+    setBoardSize((prev) => (prev.w === w && prev.h === h ? prev : nextBoardSize));
+  }, [redrawCurrentFrame]);
 
   useEffect(() => {
     resize();
     window.addEventListener("resize", resize);
     return () => {
       clearLongPressTimer();
+      if (repaintFrameRef.current) {
+        window.cancelAnimationFrame(repaintFrameRef.current);
+      }
       window.removeEventListener("resize", resize);
     };
   }, [resize]);
 
   useEffect(() => {
-    const ctx = canvasRef.current?.getContext("2d");
-    if (!ctx || !boardSize.w || !boardSize.h) {
-      return;
-    }
-
-    redrawCanvas(ctx, boardSize.w, boardSize.h, {
+    renderFrameRef.current = {
       guides: guideSegments,
       segments,
       braces,
       labels,
+      boardSize,
       draftSegment,
       selectedSegmentId,
-    });
+    };
+    redrawCurrentFrame();
   }, [
     boardSize,
     guideSegments,
@@ -231,7 +284,29 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
     labels,
     draftSegment,
     selectedSegmentId,
+    redrawCurrentFrame,
   ]);
+
+  useEffect(() => {
+    function handleCanvasRepaint() {
+      if (document.visibilityState === "hidden") {
+        return;
+      }
+      scheduleRedraw();
+    }
+
+    window.addEventListener("scroll", handleCanvasRepaint, { passive: true, capture: true });
+    window.addEventListener("orientationchange", handleCanvasRepaint);
+    window.addEventListener("pageshow", handleCanvasRepaint);
+    document.addEventListener("visibilitychange", handleCanvasRepaint);
+
+    return () => {
+      window.removeEventListener("scroll", handleCanvasRepaint, true);
+      window.removeEventListener("orientationchange", handleCanvasRepaint);
+      window.removeEventListener("pageshow", handleCanvasRepaint);
+      document.removeEventListener("visibilitychange", handleCanvasRepaint);
+    };
+  }, [scheduleRedraw]);
 
   useEffect(() => {
     if (!selectedSegmentId) {
@@ -302,7 +377,9 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
       mode: "drawing",
       startX: snappedX,
       startY: snappedY,
+      lastX: snappedX,
       pointerId: e.pointerId,
+      color: activeColor,
     };
     setDraftSegment({
       id: "draft",
@@ -331,11 +408,31 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
     }
 
     const snappedX = snapX(pos.x, boardSize.w, segments, guideSegments);
+    interaction.lastX = snappedX;
     setDraftSegment({
       id: "draft",
-      ...normalizeSegment(interaction.startX, snappedX, interaction.startY, activeColor),
-      color: activeColor,
+      ...normalizeSegment(interaction.startX, snappedX, interaction.startY, interaction.color),
+      color: interaction.color,
     });
+  }
+
+  function finalizeDrawing(interaction, endX) {
+    const nextSegment = {
+      id: nextId("segment"),
+      ...normalizeSegment(interaction.startX, endX, interaction.startY, interaction.color),
+      color: interaction.color,
+    };
+
+    if (nextSegment.x2 - nextSegment.x1 < SEGMENT_MIN_LENGTH) {
+      return null;
+    }
+
+    commitCanvas((prev) => ({
+      ...prev,
+      segments: [...prev.segments, nextSegment],
+    }));
+    setSelectedSegmentId(nextSegment.id);
+    return nextSegment;
   }
 
   function handlePointerUp(e) {
@@ -354,36 +451,36 @@ const DrawingCanvas = forwardRef(function DrawingCanvas({ problem }, ref) {
         setActionSegmentId(null);
       }
       longPressTriggeredRef.current = false;
+      scheduleRedraw();
       return;
     }
 
     const pos = getPointerPos(canvasRef.current, e);
     const snappedX = snapX(pos.x, boardSize.w, segments, guideSegments);
-    const nextSegment = {
-      id: nextId("segment"),
-      ...normalizeSegment(interaction.startX, snappedX, interaction.startY, activeColor),
-      color: activeColor,
-    };
-
     setDraftSegment(null);
-
-    if (nextSegment.x2 - nextSegment.x1 < SEGMENT_MIN_LENGTH) {
-      return;
-    }
-
-    commitCanvas((prev) => ({
-      ...prev,
-      segments: [...prev.segments, nextSegment],
-    }));
-    setSelectedSegmentId(nextSegment.id);
+    finalizeDrawing(interaction, snappedX);
+    scheduleRedraw();
   }
 
   function handlePointerCancel(e) {
     clearLongPressTimer();
+    const interaction = interactionRef.current;
     interactionRef.current = null;
     longPressTriggeredRef.current = false;
-    setDraftSegment(null);
     canvasRef.current?.releasePointerCapture?.(e.pointerId);
+
+    if (!interaction) {
+      setDraftSegment(null);
+      scheduleRedraw();
+      return;
+    }
+
+    if (interaction.mode === "drawing") {
+      finalizeDrawing(interaction, interaction.lastX ?? interaction.startX);
+    }
+
+    setDraftSegment(null);
+    scheduleRedraw();
   }
 
   function handleUndo() {
