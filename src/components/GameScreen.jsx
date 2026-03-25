@@ -129,7 +129,7 @@ export default function GameScreen({
         </div>
       </section>
 
-      <DrawingCanvas ref={canvasRef} />
+      <DrawingCanvas ref={canvasRef} problem={problem} />
 
       {showHint && (
         <section className="rounded-[26px] border border-kid-amber bg-kid-amber-light px-4 py-4 shadow-[0_18px_38px_-30px_rgba(133,79,11,0.45)]">
