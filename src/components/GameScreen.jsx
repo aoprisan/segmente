@@ -6,7 +6,8 @@ import { buildSessionResult } from "../utils/gamification";
 import { formatElapsedTime } from "../utils/leaderboard";
 
 const TIMED_TIME_LIMIT_MS = 5 * 60 * 1000;
-const TIMED_CATEGORIES = new Set(["tabla", "ordinea"]);
+const SESSION_TIMED_CATEGORIES = new Set(["tabla"]);
+const EXERCISE_TIMED_CATEGORIES = new Set(["ordinea"]);
 
 const CAT_LABELS = {
   suma: "Suma",
@@ -99,10 +100,13 @@ export default function GameScreen({
   const [isMobile, setIsMobile] = useState(getIsMobileViewport);
   const canvasRef = useRef(null);
   const startedAtRef = useRef(null);
+  const exerciseStartedAtRef = useRef(null);
   const finishedRef = useRef(false);
   const isTabla = category === "tabla";
   const isOrdinea = category === "ordinea";
-  const isTimed = TIMED_CATEGORIES.has(category);
+  const isSessionTimed = SESSION_TIMED_CATEGORIES.has(category);
+  const isExerciseTimed = EXERCISE_TIMED_CATEGORIES.has(category);
+  const isTimed = isSessionTimed || isExerciseTimed;
   const isArithmetic = isTabla || isOrdinea;
   const unitLabel = isArithmetic ? null : "cm";
   const [remainingMs, setRemainingMs] = useState(
@@ -122,7 +126,9 @@ export default function GameScreen({
   }, []);
 
   useEffect(() => {
-    startedAtRef.current = Date.now();
+    const now = Date.now();
+    startedAtRef.current = now;
+    exerciseStartedAtRef.current = now;
   }, []);
 
   function finishSession({ timedOut = false } = {}) {
@@ -133,7 +139,7 @@ export default function GameScreen({
 
     const startedAt = startedAtRef.current ?? Date.now();
     const rawElapsed = Date.now() - startedAt;
-    const elapsedMs = isTimed
+    const elapsedMs = isSessionTimed
       ? Math.min(rawElapsed, TIMED_TIME_LIMIT_MS)
       : rawElapsed;
 
@@ -158,16 +164,21 @@ export default function GameScreen({
       return undefined;
     }
 
-    const startedAt = startedAtRef.current ?? Date.now();
-
     const tick = () => {
+      const startedAt = isSessionTimed
+        ? (startedAtRef.current ?? Date.now())
+        : (exerciseStartedAtRef.current ?? Date.now());
       const remaining = Math.max(
         0,
         TIMED_TIME_LIMIT_MS - (Date.now() - startedAt),
       );
       setRemainingMs(remaining);
       if (remaining <= 0) {
-        finishSession({ timedOut: true });
+        if (isSessionTimed) {
+          finishSession({ timedOut: true });
+        } else {
+          handleExerciseTimeout();
+        }
       }
     };
 
@@ -175,7 +186,13 @@ export default function GameScreen({
     const interval = window.setInterval(tick, 250);
     return () => window.clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTimed]);
+  }, [isTimed, isSessionTimed, index]);
+
+  function handleExerciseTimeout() {
+    currentStreakRef.current = 0;
+    setCurrentStreak(0);
+    advanceToNext();
+  }
 
   function advanceToNext() {
     if (index + 1 >= total) {
@@ -188,6 +205,10 @@ export default function GameScreen({
     setShowHint(false);
     setShowSteps(false);
     canvasRef.current?.clear();
+    if (isExerciseTimed) {
+      exerciseStartedAtRef.current = Date.now();
+      setRemainingMs(TIMED_TIME_LIMIT_MS);
+    }
   }
 
   function handleCheck() {
