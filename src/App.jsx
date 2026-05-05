@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import LandingScreen from "./components/LandingScreen";
 import MenuScreen from "./components/MenuScreen";
 import GameScreen from "./components/GameScreen";
 import ResultsScreen from "./components/ResultsScreen";
@@ -19,7 +20,7 @@ import {
 } from "./utils/leaderboard";
 
 export default function App() {
-  const [screen, setScreen] = useState("menu"); // menu | name-prompt | game | results
+  const [screen, setScreen] = useState("landing"); // landing | menu | name-prompt | game | results
   const [sessionConfig, setSessionConfig] = useState(null);
   const [finalResult, setFinalResult] = useState(null);
   const [progress, setProgress] = useState(loadProgress);
@@ -77,8 +78,12 @@ export default function App() {
 
   const handleNameCancel = useCallback(() => {
     setPendingTablaName("");
-    setScreen("menu");
+    setScreen("landing");
   }, []);
+
+  const goToSegmenteMenu = useCallback(() => setScreen("menu"), []);
+  const goToLanding = useCallback(() => setScreen("landing"), []);
+  const goToTabla = useCallback(() => startCategoryGame("tabla"), [startCategoryGame]);
 
   const startDailyChallenge = useCallback(() => {
     const sessionId = getTodayChallengeKey();
@@ -109,7 +114,7 @@ export default function App() {
 
   const goHome = useCallback(() => {
     clearPlayerName();
-    setScreen("menu");
+    setScreen("landing");
   }, []);
 
   const replay = useCallback(() => {
@@ -152,10 +157,18 @@ export default function App() {
         </header>
 
         <main className="relative">
+          {screen === "landing" && (
+            <LandingScreen
+              onChooseSegmente={goToSegmenteMenu}
+              onChooseTabla={goToTabla}
+            />
+          )}
+
           {screen === "menu" && (
             <MenuScreen
               onStart={startCategoryGame}
               onStartDaily={startDailyChallenge}
+              onBack={goToLanding}
               progress={progress}
               bestCategory={bestCategory}
               dailyChallenge={dailyChallenge}

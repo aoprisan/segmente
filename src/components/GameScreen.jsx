@@ -155,31 +155,7 @@ export default function GameScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTabla]);
 
-  function handleCheck() {
-    const val = parseInt(answer, 10);
-    if (isNaN(val)) {
-      setFeedback("empty");
-      return;
-    }
-    if (val === problem.answer) {
-      setFeedback("correct");
-      scoreRef.current += 1;
-      setScore(scoreRef.current);
-      currentStreakRef.current += 1;
-      setCurrentStreak(currentStreakRef.current);
-      if (currentStreakRef.current > bestStreakRef.current) {
-        bestStreakRef.current = currentStreakRef.current;
-        setBestStreak(bestStreakRef.current);
-      }
-    } else {
-      setFeedback("wrong");
-      currentStreakRef.current = 0;
-      setCurrentStreak(0);
-    }
-    setShowSteps(true);
-  }
-
-  function handleNext() {
+  function advanceToNext() {
     if (index + 1 >= total) {
       finishSession();
       return;
@@ -190,6 +166,38 @@ export default function GameScreen({
     setShowHint(false);
     setShowSteps(false);
     canvasRef.current?.clear();
+  }
+
+  function handleCheck() {
+    const val = parseInt(answer, 10);
+    if (isNaN(val)) {
+      setFeedback("empty");
+      return;
+    }
+    if (val === problem.answer) {
+      scoreRef.current += 1;
+      setScore(scoreRef.current);
+      currentStreakRef.current += 1;
+      setCurrentStreak(currentStreakRef.current);
+      if (currentStreakRef.current > bestStreakRef.current) {
+        bestStreakRef.current = currentStreakRef.current;
+        setBestStreak(bestStreakRef.current);
+      }
+      if (isTabla) {
+        advanceToNext();
+        return;
+      }
+      setFeedback("correct");
+    } else {
+      setFeedback("wrong");
+      currentStreakRef.current = 0;
+      setCurrentStreak(0);
+    }
+    setShowSteps(true);
+  }
+
+  function handleNext() {
+    advanceToNext();
   }
 
   function handleShowHint() {
@@ -333,6 +341,51 @@ export default function GameScreen({
             </div>
           </section>
         </>
+      )}
+
+      {isTabla && (
+        <section
+          className={`flex items-center justify-between gap-4 rounded-[26px] border px-5 py-4 shadow-[0_18px_38px_-30px_rgba(8,80,65,0.45)] ${
+            remainingMs <= 30000
+              ? "border-kid-coral bg-kid-coral-light"
+              : remainingMs <= 60000
+                ? "border-kid-amber bg-kid-amber-light"
+                : "border-kid-teal bg-kid-teal-light"
+          }`}
+        >
+          <div>
+            <p
+              className={`text-[11px] font-black uppercase tracking-[0.18em] ${
+                remainingMs <= 30000
+                  ? "text-kid-coral-dark"
+                  : remainingMs <= 60000
+                    ? "text-kid-amber-dark"
+                    : "text-kid-teal-dark"
+              }`}
+            >
+              Timp rămas
+            </p>
+            <p
+              className={`mt-1 text-3xl font-black tabular-nums ${
+                remainingMs <= 30000
+                  ? "text-kid-coral-dark"
+                  : remainingMs <= 60000
+                    ? "text-kid-amber-dark"
+                    : "text-kid-teal-dark"
+              }`}
+            >
+              {formatElapsedTime(remainingMs)}
+            </p>
+          </div>
+          <span
+            className={`text-3xl ${
+              remainingMs <= 30000 ? "animate-pulse" : ""
+            }`}
+            aria-hidden="true"
+          >
+            ⏱
+          </span>
+        </section>
       )}
 
       {isTabla ? (
