@@ -196,12 +196,244 @@ export function generateTablaSession(rng = Math.random) {
     .map(([a, b]) => buildTablaProblem(a, b));
 }
 
+export const ORDINEA_SESSION_SIZE = 10;
+
+const ORDINEA_TEMPLATES = [
+  // a + b × c
+  (rng) => {
+    const b = rand(2, 9, rng);
+    const c = rand(2, 9, rng);
+    const a = rand(1, 30, rng);
+    return {
+      expression: `${a} + ${b} × ${c}`,
+      answer: a + b * c,
+      steps: [
+        `Mai întâi înmulțirea: ${b} × ${c} = ${b * c}`,
+        `Apoi adunarea: ${a} + ${b * c} = ${a + b * c}`,
+      ],
+      hint: "Înmulțirea se face înaintea adunării.",
+    };
+  },
+  // a × b + c
+  (rng) => {
+    const a = rand(2, 9, rng);
+    const b = rand(2, 9, rng);
+    const c = rand(1, 30, rng);
+    return {
+      expression: `${a} × ${b} + ${c}`,
+      answer: a * b + c,
+      steps: [
+        `Mai întâi înmulțirea: ${a} × ${b} = ${a * b}`,
+        `Apoi adunarea: ${a * b} + ${c} = ${a * b + c}`,
+      ],
+      hint: "Înmulțirea se face înaintea adunării.",
+    };
+  },
+  // a - b × c
+  (rng) => {
+    const b = rand(2, 6, rng);
+    const c = rand(2, 6, rng);
+    const a = rand(b * c + 1, 60, rng);
+    return {
+      expression: `${a} - ${b} × ${c}`,
+      answer: a - b * c,
+      steps: [
+        `Mai întâi înmulțirea: ${b} × ${c} = ${b * c}`,
+        `Apoi scăderea: ${a} - ${b * c} = ${a - b * c}`,
+      ],
+      hint: "Înmulțirea se face înaintea scăderii.",
+    };
+  },
+  // a × b - c
+  (rng) => {
+    const a = rand(2, 9, rng);
+    const b = rand(2, 9, rng);
+    const c = rand(1, Math.min(a * b - 1, 30), rng);
+    return {
+      expression: `${a} × ${b} - ${c}`,
+      answer: a * b - c,
+      steps: [
+        `Mai întâi înmulțirea: ${a} × ${b} = ${a * b}`,
+        `Apoi scăderea: ${a * b} - ${c} = ${a * b - c}`,
+      ],
+      hint: "Înmulțirea se face înaintea scăderii.",
+    };
+  },
+  // (a + b) × c
+  (rng) => {
+    const c = rand(2, 6, rng);
+    const maxSum = Math.min(20, Math.floor(99 / c));
+    const a = rand(2, Math.max(2, maxSum - 1), rng);
+    const b = rand(1, Math.max(1, maxSum - a), rng);
+    return {
+      expression: `(${a} + ${b}) × ${c}`,
+      answer: (a + b) * c,
+      steps: [
+        `Mai întâi paranteza: ${a} + ${b} = ${a + b}`,
+        `Apoi înmulțirea: ${a + b} × ${c} = ${(a + b) * c}`,
+      ],
+      hint: "Paranteza se rezolvă întotdeauna prima.",
+    };
+  },
+  // (a - b) × c
+  (rng) => {
+    const c = rand(2, 6, rng);
+    const a = rand(5, Math.min(20, Math.floor(99 / c) + 1), rng);
+    const b = rand(1, a - 1, rng);
+    return {
+      expression: `(${a} - ${b}) × ${c}`,
+      answer: (a - b) * c,
+      steps: [
+        `Mai întâi paranteza: ${a} - ${b} = ${a - b}`,
+        `Apoi înmulțirea: ${a - b} × ${c} = ${(a - b) * c}`,
+      ],
+      hint: "Paranteza se rezolvă întotdeauna prima.",
+    };
+  },
+  // a × (b + c)
+  (rng) => {
+    const a = rand(2, 6, rng);
+    const maxSum = Math.min(20, Math.floor(99 / a));
+    const b = rand(1, Math.max(1, maxSum - 1), rng);
+    const c = rand(1, Math.max(1, maxSum - b), rng);
+    return {
+      expression: `${a} × (${b} + ${c})`,
+      answer: a * (b + c),
+      steps: [
+        `Mai întâi paranteza: ${b} + ${c} = ${b + c}`,
+        `Apoi înmulțirea: ${a} × ${b + c} = ${a * (b + c)}`,
+      ],
+      hint: "Paranteza se rezolvă întotdeauna prima.",
+    };
+  },
+  // a × (b - c)
+  (rng) => {
+    const a = rand(2, 6, rng);
+    const b = rand(3, Math.min(20, Math.floor(99 / a) + 2), rng);
+    const c = rand(1, b - 1, rng);
+    return {
+      expression: `${a} × (${b} - ${c})`,
+      answer: a * (b - c),
+      steps: [
+        `Mai întâi paranteza: ${b} - ${c} = ${b - c}`,
+        `Apoi înmulțirea: ${a} × ${b - c} = ${a * (b - c)}`,
+      ],
+      hint: "Paranteza se rezolvă întotdeauna prima.",
+    };
+  },
+  // a + b ÷ c
+  (rng) => {
+    const c = rand(2, 9, rng);
+    const k = rand(2, 9, rng);
+    const b = c * k;
+    const a = rand(1, 30, rng);
+    return {
+      expression: `${a} + ${b} ÷ ${c}`,
+      answer: a + k,
+      steps: [
+        `Mai întâi împărțirea: ${b} ÷ ${c} = ${k}`,
+        `Apoi adunarea: ${a} + ${k} = ${a + k}`,
+      ],
+      hint: "Împărțirea se face înaintea adunării.",
+    };
+  },
+  // a - b ÷ c
+  (rng) => {
+    const c = rand(2, 9, rng);
+    const k = rand(1, 9, rng);
+    const b = c * k;
+    const a = rand(k + 1, 40, rng);
+    return {
+      expression: `${a} - ${b} ÷ ${c}`,
+      answer: a - k,
+      steps: [
+        `Mai întâi împărțirea: ${b} ÷ ${c} = ${k}`,
+        `Apoi scăderea: ${a} - ${k} = ${a - k}`,
+      ],
+      hint: "Împărțirea se face înaintea scăderii.",
+    };
+  },
+  // a ÷ b + c
+  (rng) => {
+    const b = rand(2, 9, rng);
+    const k = rand(2, 9, rng);
+    const a = b * k;
+    const c = rand(1, 30, rng);
+    return {
+      expression: `${a} ÷ ${b} + ${c}`,
+      answer: k + c,
+      steps: [
+        `Mai întâi împărțirea: ${a} ÷ ${b} = ${k}`,
+        `Apoi adunarea: ${k} + ${c} = ${k + c}`,
+      ],
+      hint: "Împărțirea se face înaintea adunării.",
+    };
+  },
+  // a ÷ b - c
+  (rng) => {
+    const b = rand(2, 9, rng);
+    const k = rand(3, 10, rng);
+    const a = b * k;
+    const c = rand(1, k - 1, rng);
+    return {
+      expression: `${a} ÷ ${b} - ${c}`,
+      answer: k - c,
+      steps: [
+        `Mai întâi împărțirea: ${a} ÷ ${b} = ${k}`,
+        `Apoi scăderea: ${k} - ${c} = ${k - c}`,
+      ],
+      hint: "Împărțirea se face înaintea scăderii.",
+    };
+  },
+  // (a + b) ÷ c
+  (rng) => {
+    const c = rand(2, 9, rng);
+    const k = rand(2, 12, rng);
+    const total = c * k;
+    const a = rand(1, total - 1, rng);
+    const b = total - a;
+    return {
+      expression: `(${a} + ${b}) ÷ ${c}`,
+      answer: k,
+      steps: [
+        `Mai întâi paranteza: ${a} + ${b} = ${total}`,
+        `Apoi împărțirea: ${total} ÷ ${c} = ${k}`,
+      ],
+      hint: "Paranteza se rezolvă întotdeauna prima.",
+    };
+  },
+];
+
+export function generateOrdineaProblem(rng = Math.random) {
+  const template = pick(ORDINEA_TEMPLATES, rng);
+  const { expression, answer, steps, hint } = template(rng);
+  return {
+    category: "ordinea",
+    text: "Calculează respectând ordinea operațiilor.",
+    question: `${expression} = ?`,
+    answer,
+    hint,
+    steps: [...steps, `= ${answer}`],
+    segments: [],
+    expression,
+  };
+}
+
+export function generateOrdineaSession(rng = Math.random) {
+  return Array.from({ length: ORDINEA_SESSION_SIZE }, () =>
+    generateOrdineaProblem(rng),
+  );
+}
+
 /**
  * Generate a full game session (array of problems).
  */
 export function generateSession(category, count = 5, rng = Math.random) {
   if (category === "tabla") {
     return generateTablaSession(rng);
+  }
+  if (category === "ordinea") {
+    return generateOrdineaSession(rng);
   }
   return Array.from({ length: count }, () => generateProblem(category, rng));
 }

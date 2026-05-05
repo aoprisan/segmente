@@ -6,6 +6,7 @@ export const CATEGORY_LABELS = {
   dublu: "Dublu / Jumătate",
   mixt: "Probleme mixte",
   tabla: "Tabla înmulțirii",
+  ordinea: "Ordinea operațiilor",
 };
 
 const CATEGORY_IDS = Object.keys(CATEGORY_LABELS);
@@ -45,6 +46,11 @@ const ACHIEVEMENT_DEFINITIONS = {
     id: "perfect_tabla",
     title: "Maestru al tablei",
     description: "Ai răspuns corect la toate cele 10 înmulțiri.",
+  },
+  perfect_ordinea: {
+    id: "perfect_ordinea",
+    title: "Stăpân al ordinii",
+    description: "Ai rezolvat corect toate cele 10 probleme cu ordinea operațiilor.",
   },
 };
 

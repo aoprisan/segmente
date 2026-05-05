@@ -40,28 +40,53 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
   } = result;
 
   const isTabla = category === "tabla";
+  const isOrdinea = category === "ordinea";
+  const isTimed = isTabla || isOrdinea;
+  const leaderboardCategory = isOrdinea ? "ordinea" : "tabla";
+  const leaderboardAccent = isOrdinea
+    ? {
+        kicker: "text-kid-pink-dark",
+        soft: "bg-kid-pink-light",
+        softText: "text-kid-pink-dark",
+        border: "border-kid-pink",
+        chip: "bg-kid-pink-light text-kid-pink-dark",
+        rankBg: "bg-kid-pink",
+        timeChip: "bg-kid-pink-light text-kid-pink-dark",
+      }
+    : {
+        kicker: "text-kid-teal-dark",
+        soft: "bg-kid-teal-light",
+        softText: "text-kid-teal-dark",
+        border: "border-kid-teal",
+        chip: "bg-kid-teal-light text-kid-teal-dark",
+        rankBg: "bg-kid-teal",
+        timeChip: "bg-kid-teal-light text-kid-teal-dark",
+      };
   const savedRef = useRef(false);
   const [leaderboard, setLeaderboard] = useState(() =>
-    isTabla ? loadLeaderboard() : [],
+    isTimed ? loadLeaderboard(leaderboardCategory) : [],
   );
   const [highlightRank, setHighlightRank] = useState(null);
 
   useEffect(() => {
-    if (!isTabla || savedRef.current) {
+    if (!isTimed || savedRef.current) {
       return;
     }
     savedRef.current = true;
     const playerName = loadPlayerName() || "Anonim";
-    const { entries, rank } = saveLeaderboardEntry({
-      name: playerName,
-      score,
-      total,
-      elapsedMs: elapsedMs ?? 0,
-      completedAt: Date.now(),
-    });
+    const { entries, rank } = saveLeaderboardEntry(
+      {
+        name: playerName,
+        score,
+        total,
+        elapsedMs: elapsedMs ?? 0,
+        completedAt: Date.now(),
+      },
+      leaderboardCategory,
+    );
     setLeaderboard(entries);
     setHighlightRank(rank);
-  }, [isTabla, score, total, elapsedMs]);
+  }, [isTimed, leaderboardCategory, score, total, elapsedMs]);
 
   let emoji;
   let title;
@@ -165,9 +190,9 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
             {dailyBonusAwarded ? "Bonusul zilnic a fost adăugat." : "Bonusul zilnic a fost deja revendicat astăzi."}
           </p>
         )}
-        {isTabla && (
+        {isTimed && (
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <span className="status-chip bg-kid-teal-light text-kid-teal-dark">
+            <span className={`status-chip ${leaderboardAccent.timeChip}`}>
               Timp: {formatElapsedTime(elapsedMs ?? 0)}
             </span>
             {timedOut && (
@@ -255,24 +280,24 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
         </section>
       )}
 
-      {isTabla && (
+      {isTimed && (
         <section className="studio-panel px-4 py-4 text-left">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-kid-teal-dark">
+              <p className={`text-[11px] font-black uppercase tracking-[0.18em] ${leaderboardAccent.kicker}`}>
                 Clasament
               </p>
               <h3 className="mt-1 text-lg font-black text-[var(--color-board-ink)]">
                 Cele mai bune scoruri
               </h3>
             </div>
-            <span className="status-chip bg-kid-teal-light text-kid-teal-dark">
+            <span className={`status-chip ${leaderboardAccent.chip}`}>
               Top 10
             </span>
           </div>
 
           {leaderboard.length === 0 ? (
-            <p className="mt-4 rounded-[22px] bg-kid-teal-light px-4 py-4 text-sm font-semibold text-kid-teal-dark">
+            <p className={`mt-4 rounded-[22px] ${leaderboardAccent.soft} px-4 py-4 text-sm font-semibold ${leaderboardAccent.softText}`}>
               Nu există încă scoruri salvate.
             </p>
           ) : (
@@ -284,7 +309,7 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
                     key={`${entry.completedAt}-${i}`}
                     className={`flex items-center justify-between gap-3 rounded-[22px] px-4 py-3 ${
                       isCurrent
-                        ? "border border-kid-teal bg-kid-teal-light"
+                        ? `border ${leaderboardAccent.border} ${leaderboardAccent.soft}`
                         : "bg-white/85 shadow-[inset_0_0_0_1px_rgba(232,218,192,0.6)]"
                     }`}
                   >
@@ -292,8 +317,8 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
                       <span
                         className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-black ${
                           isCurrent
-                            ? "bg-kid-teal text-white"
-                            : "bg-kid-teal-light text-kid-teal-dark"
+                            ? `${leaderboardAccent.rankBg} text-white`
+                            : `${leaderboardAccent.soft} ${leaderboardAccent.softText}`
                         }`}
                       >
                         {i + 1}
@@ -301,7 +326,7 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
                       <span className="text-sm font-black text-[var(--color-board-ink)]">
                         {entry.name}
                         {isCurrent && (
-                          <span className="ml-2 text-[10px] font-black uppercase tracking-[0.18em] text-kid-teal-dark">
+                          <span className={`ml-2 text-[10px] font-black uppercase tracking-[0.18em] ${leaderboardAccent.softText}`}>
                             Tu
                           </span>
                         )}
@@ -333,10 +358,10 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
         <button
           onClick={onReplay}
           className={`action-secondary studio-button w-full border border-[var(--color-board-line)] bg-white/90 ${
-            isTabla ? "text-kid-teal-dark" : "text-kid-purple-dark"
+            isTimed ? leaderboardAccent.softText : "text-kid-purple-dark"
           }`}
         >
-          {isTabla ? "Sesiune nouă" : "Joacă din nou"}
+          {isTimed ? "Sesiune nouă" : "Joacă din nou"}
         </button>
       </div>
     </div>

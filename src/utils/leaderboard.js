@@ -1,8 +1,16 @@
-const LEADERBOARD_KEY = "segmente-tabla-leaderboard-v1";
+const LEADERBOARD_KEYS = {
+  tabla: "segmente-tabla-leaderboard-v1",
+  ordinea: "segmente-ordinea-leaderboard-v1",
+};
+const DEFAULT_LEADERBOARD_CATEGORY = "tabla";
 const PLAYER_NAME_KEY = "segmente-tabla-player-name-v1";
 
 export const LEADERBOARD_MAX_ENTRIES = 10;
 const NAME_MAX_LENGTH = 20;
+
+function getLeaderboardKey(category) {
+  return LEADERBOARD_KEYS[category] || LEADERBOARD_KEYS[DEFAULT_LEADERBOARD_CATEGORY];
+}
 
 function toCount(value) {
   return Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0;
@@ -45,12 +53,12 @@ function sortEntries(entries) {
   });
 }
 
-export function loadLeaderboard() {
+export function loadLeaderboard(category = DEFAULT_LEADERBOARD_CATEGORY) {
   if (typeof window === "undefined") {
     return [];
   }
   try {
-    const raw = window.localStorage.getItem(LEADERBOARD_KEY);
+    const raw = window.localStorage.getItem(getLeaderboardKey(category));
     if (!raw) {
       return [];
     }
@@ -65,22 +73,22 @@ export function loadLeaderboard() {
   }
 }
 
-export function saveLeaderboardEntry(entry) {
+export function saveLeaderboardEntry(entry, category = DEFAULT_LEADERBOARD_CATEGORY) {
   const nextEntry = sanitizeEntry({
     ...entry,
     completedAt: entry?.completedAt ?? Date.now(),
   });
 
   if (!nextEntry) {
-    return { entries: loadLeaderboard(), rank: null, savedEntry: null };
+    return { entries: loadLeaderboard(category), rank: null, savedEntry: null };
   }
 
-  const current = loadLeaderboard();
+  const current = loadLeaderboard(category);
   const merged = sortEntries([...current, nextEntry]).slice(0, LEADERBOARD_MAX_ENTRIES);
 
   if (typeof window !== "undefined") {
     try {
-      window.localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(merged));
+      window.localStorage.setItem(getLeaderboardKey(category), JSON.stringify(merged));
     } catch {
       // ignore — keep the game playable even if storage is unavailable
     }

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import DrawingCanvas from "./DrawingCanvas";
 import TablaVisual from "./TablaVisual";
+import OrdineaVisual from "./OrdineaVisual";
 import { buildSessionResult } from "../utils/gamification";
 import { formatElapsedTime } from "../utils/leaderboard";
 
-const TABLA_TIME_LIMIT_MS = 5 * 60 * 1000;
+const TIMED_TIME_LIMIT_MS = 5 * 60 * 1000;
+const TIMED_CATEGORIES = new Set(["tabla", "ordinea"]);
 
 const CAT_LABELS = {
   suma: "Suma",
@@ -12,6 +14,7 @@ const CAT_LABELS = {
   dublu: "Dublu / Jumătate",
   mixt: "Mixt",
   tabla: "Tabla înmulțirii",
+  ordinea: "Ordinea operațiilor",
 };
 
 const CAT_COLORS = {
@@ -45,6 +48,22 @@ const CAT_COLORS = {
     border: "border-kid-teal",
     text: "text-kid-teal-dark",
   },
+  ordinea: {
+    bg: "bg-kid-pink",
+    soft: "bg-kid-pink-light",
+    border: "border-kid-pink",
+    text: "text-kid-pink-dark",
+  },
+};
+
+const TIMER_BORDER_BY_CATEGORY = {
+  tabla: "border-kid-teal bg-kid-teal-light",
+  ordinea: "border-kid-pink bg-kid-pink-light",
+};
+
+const TIMER_TEXT_BY_CATEGORY = {
+  tabla: "text-kid-teal-dark",
+  ordinea: "text-kid-pink-dark",
 };
 
 const MOBILE_BREAKPOINT = 640;
@@ -82,9 +101,12 @@ export default function GameScreen({
   const startedAtRef = useRef(null);
   const finishedRef = useRef(false);
   const isTabla = category === "tabla";
-  const unitLabel = isTabla ? null : "cm";
+  const isOrdinea = category === "ordinea";
+  const isTimed = TIMED_CATEGORIES.has(category);
+  const isArithmetic = isTabla || isOrdinea;
+  const unitLabel = isArithmetic ? null : "cm";
   const [remainingMs, setRemainingMs] = useState(
-    isTabla ? TABLA_TIME_LIMIT_MS : 0,
+    isTimed ? TIMED_TIME_LIMIT_MS : 0,
   );
 
   const problem = problems[index];
@@ -111,8 +133,8 @@ export default function GameScreen({
 
     const startedAt = startedAtRef.current ?? Date.now();
     const rawElapsed = Date.now() - startedAt;
-    const elapsedMs = isTabla
-      ? Math.min(rawElapsed, TABLA_TIME_LIMIT_MS)
+    const elapsedMs = isTimed
+      ? Math.min(rawElapsed, TIMED_TIME_LIMIT_MS)
       : rawElapsed;
 
     onFinish(
@@ -132,7 +154,7 @@ export default function GameScreen({
   }
 
   useEffect(() => {
-    if (!isTabla) {
+    if (!isTimed) {
       return undefined;
     }
 
@@ -141,7 +163,7 @@ export default function GameScreen({
     const tick = () => {
       const remaining = Math.max(
         0,
-        TABLA_TIME_LIMIT_MS - (Date.now() - startedAt),
+        TIMED_TIME_LIMIT_MS - (Date.now() - startedAt),
       );
       setRemainingMs(remaining);
       if (remaining <= 0) {
@@ -153,7 +175,7 @@ export default function GameScreen({
     const interval = window.setInterval(tick, 250);
     return () => window.clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isTabla]);
+  }, [isTimed]);
 
   function advanceToNext() {
     if (index + 1 >= total) {
@@ -183,7 +205,7 @@ export default function GameScreen({
         bestStreakRef.current = currentStreakRef.current;
         setBestStreak(bestStreakRef.current);
       }
-      if (isTabla) {
+      if (isTimed) {
         advanceToNext();
         return;
       }
@@ -232,12 +254,12 @@ export default function GameScreen({
                   Provocarea zilei
                 </span>
               )}
-              {isTabla && (
+              {isTimed && (
                 <span
                   className={`status-chip ${
                     remainingMs <= 30000
                       ? "bg-kid-coral-light text-kid-coral-dark"
-                      : "bg-kid-teal-light text-kid-teal-dark"
+                      : `${catColor.soft} ${catColor.text}`
                   }`}
                 >
                   ⏱ {formatElapsedTime(remainingMs)}
@@ -292,12 +314,12 @@ export default function GameScreen({
                   Provocarea zilei
                 </span>
               )}
-              {isTabla && (
+              {isTimed && (
                 <span
                   className={`status-chip ${
                     remainingMs <= 30000
                       ? "bg-kid-coral-light text-kid-coral-dark"
-                      : "bg-kid-teal-light text-kid-teal-dark"
+                      : `${catColor.soft} ${catColor.text}`
                   }`}
                 >
                   ⏱ {formatElapsedTime(remainingMs)}
@@ -343,14 +365,14 @@ export default function GameScreen({
         </>
       )}
 
-      {isTabla && (
+      {isTimed && (
         <section
           className={`flex items-center justify-between gap-4 rounded-[26px] border px-5 py-4 shadow-[0_18px_38px_-30px_rgba(8,80,65,0.45)] ${
             remainingMs <= 30000
               ? "border-kid-coral bg-kid-coral-light"
               : remainingMs <= 60000
                 ? "border-kid-amber bg-kid-amber-light"
-                : "border-kid-teal bg-kid-teal-light"
+                : TIMER_BORDER_BY_CATEGORY[category] || TIMER_BORDER_BY_CATEGORY.tabla
           }`}
         >
           <div>
@@ -360,7 +382,7 @@ export default function GameScreen({
                   ? "text-kid-coral-dark"
                   : remainingMs <= 60000
                     ? "text-kid-amber-dark"
-                    : "text-kid-teal-dark"
+                    : TIMER_TEXT_BY_CATEGORY[category] || TIMER_TEXT_BY_CATEGORY.tabla
               }`}
             >
               Timp rămas
@@ -371,7 +393,7 @@ export default function GameScreen({
                   ? "text-kid-coral-dark"
                   : remainingMs <= 60000
                     ? "text-kid-amber-dark"
-                    : "text-kid-teal-dark"
+                    : TIMER_TEXT_BY_CATEGORY[category] || TIMER_TEXT_BY_CATEGORY.tabla
               }`}
             >
               {formatElapsedTime(remainingMs)}
@@ -390,6 +412,8 @@ export default function GameScreen({
 
       {isTabla ? (
         <TablaVisual problem={problem} />
+      ) : isOrdinea ? (
+        <OrdineaVisual problem={problem} />
       ) : (
         <DrawingCanvas ref={canvasRef} problem={problem} />
       )}
@@ -415,7 +439,9 @@ export default function GameScreen({
               <p className="mt-1 text-sm font-semibold text-slate-500">
               {isTabla
                 ? "Scrie rezultatul înmulțirii."
-                : "Scrie rezultatul în centimetri."}
+                : isOrdinea
+                  ? "Scrie rezultatul calculului."
+                  : "Scrie rezultatul în centimetri."}
               </p>
             </div>
             <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
