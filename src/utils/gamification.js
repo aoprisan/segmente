@@ -5,6 +5,7 @@ export const CATEGORY_LABELS = {
   diferenta: "Diferența segmentelor",
   dublu: "Dublu / Jumătate",
   mixt: "Probleme mixte",
+  tabla: "Tabla înmulțirii",
 };
 
 const CATEGORY_IDS = Object.keys(CATEGORY_LABELS);
@@ -39,6 +40,11 @@ const ACHIEVEMENT_DEFINITIONS = {
     id: "perfect_mixt",
     title: "Perfect la mixt",
     description: "Ai rezolvat perfect o rundă din categoria Probleme mixte.",
+  },
+  perfect_tabla: {
+    id: "perfect_tabla",
+    title: "Maestru al tablei",
+    description: "Ai răspuns corect la toate cele 10 înmulțiri.",
   },
 };
 
@@ -206,6 +212,8 @@ export function buildSessionResult({
   mode = "standard",
   sessionId = null,
   sessionLabel = null,
+  elapsedMs = null,
+  timedOut = false,
 }) {
   const stars = calculateStars({ score, total, hintsUsed });
   return {
@@ -219,6 +227,8 @@ export function buildSessionResult({
     mode,
     sessionId,
     sessionLabel,
+    elapsedMs,
+    timedOut,
     achievements: getSessionAchievements({
       score,
       total,

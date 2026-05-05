@@ -61,6 +61,12 @@ export function createSeededRng(seedInput) {
  * a reference diagram on the canvas so kids know what to draw.
  */
 export function generateProblem(category, rng = Math.random) {
+  if (category === "tabla") {
+    const a = rand(1, 10, rng);
+    const b = rand(1, 10, rng);
+    return buildTablaProblem(a, b);
+  }
+
   const [n1, n2] = pick(NAMES, rng);
   const obj = pick(OBJECTS, rng);
 
@@ -157,9 +163,45 @@ export function generateProblem(category, rng = Math.random) {
   return generateProblem("suma", rng);
 }
 
+function buildTablaProblem(a, b) {
+  return {
+    category: "tabla",
+    text: "Calculează rezultatul înmulțirii.",
+    question: `${a} × ${b} = ?`,
+    answer: a * b,
+    hint: `Adună ${a} de ${b} ori (sau ${b} de ${a} ori).`,
+    steps: [`${a} × ${b}`, `= ${a * b}`],
+    segments: [],
+    factors: { a, b },
+  };
+}
+
+export const TABLA_SESSION_SIZE = 10;
+
+export function generateTablaSession(rng = Math.random) {
+  const pool = [];
+  for (let a = 1; a <= 10; a += 1) {
+    for (let b = 1; b <= 10; b += 1) {
+      pool.push([a, b]);
+    }
+  }
+
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  return pool
+    .slice(0, TABLA_SESSION_SIZE)
+    .map(([a, b]) => buildTablaProblem(a, b));
+}
+
 /**
  * Generate a full game session (array of problems).
  */
 export function generateSession(category, count = 5, rng = Math.random) {
+  if (category === "tabla") {
+    return generateTablaSession(rng);
+  }
   return Array.from({ length: count }, () => generateProblem(category, rng));
 }

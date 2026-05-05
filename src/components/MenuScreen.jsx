@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { TOTAL_BADGES } from "../utils/gamification";
+import { formatElapsedTime, loadLeaderboard } from "../utils/leaderboard";
 
 const categories = [
   {
@@ -67,6 +69,31 @@ const categories = [
       </svg>
     ),
   },
+  {
+    id: "tabla",
+    label: "Tabla înmulțirii",
+    borderClass: "border-kid-teal",
+    lightClass: "bg-kid-teal-light",
+    textClass: "text-kid-teal-dark",
+    description: "10 înmulțiri în 5 minute. Bate-ți recordul!",
+    fullWidth: true,
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 36 36">
+        {[6, 18, 30].map((cy) =>
+          [6, 18, 30].map((cx) => (
+            <circle
+              key={`${cx}-${cy}`}
+              cx={cx}
+              cy={cy}
+              r="2.4"
+              fill="#1D9E75"
+            />
+          )),
+        )}
+        <text x="18" y="22" textAnchor="middle" fontSize="11" fontWeight="800" fill="#085041">×</text>
+      </svg>
+    ),
+  },
 ];
 
 export default function MenuScreen({
@@ -76,6 +103,12 @@ export default function MenuScreen({
   bestCategory,
   dailyChallenge,
 }) {
+  const [leaderboard, setLeaderboard] = useState([]);
+
+  useEffect(() => {
+    setLeaderboard(loadLeaderboard());
+  }, []);
+
   return (
     <div className="space-y-4 px-1 pb-6">
       <section className="studio-panel px-5 py-5 text-left">
@@ -171,7 +204,7 @@ export default function MenuScreen({
           <button
             key={cat.id}
             onClick={() => onStart(cat.id)}
-            className={`studio-panel studio-button flex min-h-[190px] flex-col items-start rounded-[26px] border p-4 text-left ${cat.borderClass}`}
+            className={`studio-panel studio-button flex min-h-[190px] flex-col items-start rounded-[26px] border p-4 text-left ${cat.borderClass} ${cat.fullWidth ? "col-span-2" : ""}`}
           >
             <span className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${cat.lightClass}`}>
               {cat.icon}
@@ -189,8 +222,57 @@ export default function MenuScreen({
         ))}
       </div>
 
+      <section className="studio-panel px-5 py-5 text-left">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <span className="studio-kicker">Clasament</span>
+            <h2 className="mt-3 text-xl font-black text-[var(--color-board-ink)]">
+              Cele mai bune scoruri
+            </h2>
+            <p className="mt-1 text-xs font-semibold text-slate-500">
+              Tabla înmulțirii — 10 înmulțiri, 5 minute pe sesiune.
+            </p>
+          </div>
+          <span className="status-chip bg-kid-teal-light text-kid-teal-dark">
+            Top {Math.max(leaderboard.length, 1)}
+          </span>
+        </div>
+
+        {leaderboard.length === 0 ? (
+          <p className="mt-4 rounded-[22px] bg-kid-teal-light px-4 py-4 text-sm font-semibold text-kid-teal-dark">
+            Nu există încă scoruri. Joacă tabla înmulțirii și fii primul!
+          </p>
+        ) : (
+          <ol className="mt-4 space-y-2">
+            {leaderboard.map((entry, i) => (
+              <li
+                key={`${entry.completedAt}-${i}`}
+                className="flex items-center justify-between gap-3 rounded-[22px] bg-white/85 px-4 py-3 shadow-[inset_0_0_0_1px_rgba(232,218,192,0.6)]"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-kid-teal-light text-sm font-black text-kid-teal-dark">
+                    {i + 1}
+                  </span>
+                  <span className="text-sm font-black text-[var(--color-board-ink)]">
+                    {entry.name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="status-chip bg-kid-green-light text-kid-green-dark">
+                    {entry.score}/{entry.total}
+                  </span>
+                  <span className="status-chip bg-kid-amber-light text-kid-amber-dark">
+                    {formatElapsedTime(entry.elapsedMs)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
       <p className="text-center text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-        Alege o categorie și rezolvă 5 probleme
+        Categoriile clasice au 5 probleme. Tabla înmulțirii are 10 contra cronometru.
       </p>
     </div>
   );

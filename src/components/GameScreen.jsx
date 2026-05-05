@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import DrawingCanvas from "./DrawingCanvas";
+import TablaVisual from "./TablaVisual";
 import { buildSessionResult } from "../utils/gamification";
+import { formatElapsedTime } from "../utils/leaderboard";
+
+const TABLA_TIME_LIMIT_MS = 5 * 60 * 1000;
 
 const CAT_LABELS = {
   suma: "Suma",
   diferenta: "Diferența",
   dublu: "Dublu / Jumătate",
   mixt: "Mixt",
+  tabla: "Tabla înmulțirii",
 };
 
 const CAT_COLORS = {
@@ -33,6 +38,12 @@ const CAT_COLORS = {
     soft: "bg-kid-purple-light",
     border: "border-kid-purple",
     text: "text-kid-purple-dark",
+  },
+  tabla: {
+    bg: "bg-kid-teal",
+    soft: "bg-kid-teal-light",
+    border: "border-kid-teal",
+    text: "text-kid-teal-dark",
   },
 };
 
@@ -68,6 +79,13 @@ export default function GameScreen({
   const [hintedProblems, setHintedProblems] = useState([]);
   const [isMobile, setIsMobile] = useState(getIsMobileViewport);
   const canvasRef = useRef(null);
+  const startedAtRef = useRef(null);
+  const finishedRef = useRef(false);
+  const isTabla = category === "tabla";
+  const unitLabel = isTabla ? null : "cm";
+  const [remainingMs, setRemainingMs] = useState(
+    isTabla ? TABLA_TIME_LIMIT_MS : 0,
+  );
 
   const problem = problems[index];
   const total = problems.length;
@@ -80,6 +98,62 @@ export default function GameScreen({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    startedAtRef.current = Date.now();
+  }, []);
+
+  function finishSession({ timedOut = false } = {}) {
+    if (finishedRef.current) {
+      return;
+    }
+    finishedRef.current = true;
+
+    const startedAt = startedAtRef.current ?? Date.now();
+    const rawElapsed = Date.now() - startedAt;
+    const elapsedMs = isTabla
+      ? Math.min(rawElapsed, TABLA_TIME_LIMIT_MS)
+      : rawElapsed;
+
+    onFinish(
+      buildSessionResult({
+        score: scoreRef.current,
+        total,
+        hintsUsed: hintedProblems.length,
+        bestStreak: bestStreakRef.current,
+        category,
+        mode: sessionMode,
+        sessionId,
+        sessionLabel,
+        elapsedMs,
+        timedOut,
+      }),
+    );
+  }
+
+  useEffect(() => {
+    if (!isTabla) {
+      return undefined;
+    }
+
+    const startedAt = startedAtRef.current ?? Date.now();
+
+    const tick = () => {
+      const remaining = Math.max(
+        0,
+        TABLA_TIME_LIMIT_MS - (Date.now() - startedAt),
+      );
+      setRemainingMs(remaining);
+      if (remaining <= 0) {
+        finishSession({ timedOut: true });
+      }
+    };
+
+    tick();
+    const interval = window.setInterval(tick, 250);
+    return () => window.clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTabla]);
 
   function handleCheck() {
     const val = parseInt(answer, 10);
@@ -107,18 +181,7 @@ export default function GameScreen({
 
   function handleNext() {
     if (index + 1 >= total) {
-      onFinish(
-        buildSessionResult({
-          score: scoreRef.current,
-          total,
-          hintsUsed: hintedProblems.length,
-          bestStreak: bestStreakRef.current,
-          category,
-          mode: sessionMode,
-          sessionId,
-          sessionLabel,
-        }),
-      );
+      finishSession();
       return;
     }
     setIndex((i) => i + 1);
@@ -159,6 +222,17 @@ export default function GameScreen({
               {sessionMode === "daily" && (
                 <span className="status-chip bg-kid-amber-light text-kid-amber-dark">
                   Provocarea zilei
+                </span>
+              )}
+              {isTabla && (
+                <span
+                  className={`status-chip ${
+                    remainingMs <= 30000
+                      ? "bg-kid-coral-light text-kid-coral-dark"
+                      : "bg-kid-teal-light text-kid-teal-dark"
+                  }`}
+                >
+                  ⏱ {formatElapsedTime(remainingMs)}
                 </span>
               )}
             </div>
@@ -210,6 +284,17 @@ export default function GameScreen({
                   Provocarea zilei
                 </span>
               )}
+              {isTabla && (
+                <span
+                  className={`status-chip ${
+                    remainingMs <= 30000
+                      ? "bg-kid-coral-light text-kid-coral-dark"
+                      : "bg-kid-teal-light text-kid-teal-dark"
+                  }`}
+                >
+                  ⏱ {formatElapsedTime(remainingMs)}
+                </span>
+              )}
             </div>
             <button
                 onClick={onHome}
@@ -250,7 +335,11 @@ export default function GameScreen({
         </>
       )}
 
-      <DrawingCanvas ref={canvasRef} problem={problem} />
+      {isTabla ? (
+        <TablaVisual problem={problem} />
+      ) : (
+        <DrawingCanvas ref={canvasRef} problem={problem} />
+      )}
 
       {showHint && (
         <section className="rounded-[26px] border border-kid-amber bg-kid-amber-light px-4 py-4 shadow-[0_18px_38px_-30px_rgba(133,79,11,0.45)]">
@@ -271,7 +360,9 @@ export default function GameScreen({
                 Răspunsul tău
               </p>
               <p className="mt-1 text-sm font-semibold text-slate-500">
-              Scrie rezultatul în centimetri.
+              {isTabla
+                ? "Scrie rezultatul înmulțirii."
+                : "Scrie rezultatul în centimetri."}
               </p>
             </div>
             <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
@@ -288,9 +379,11 @@ export default function GameScreen({
               placeholder="?"
               className={`h-14 flex-1 rounded-[22px] border border-[#DCCDB1] bg-[#FFFDF8] px-4 text-center text-2xl font-black ${catColor.text} outline-none transition focus:border-[var(--color-board-ink)] focus:bg-white`}
             />
-            <div className="rounded-[22px] bg-[#F5EDDE] px-4 py-4 text-sm font-black text-slate-500">
-              cm
-            </div>
+            {unitLabel && (
+              <div className="rounded-[22px] bg-[#F5EDDE] px-4 py-4 text-sm font-black text-slate-500">
+                {unitLabel}
+              </div>
+            )}
           </div>
 
           {feedback === "empty" && (
@@ -345,7 +438,11 @@ export default function GameScreen({
             Nu e corect.
           </p>
           <p className="mt-2 text-sm font-semibold text-kid-coral-dark">
-            Răspunsul este <span className="font-black">{problem.answer} cm</span>
+            Răspunsul este{" "}
+            <span className="font-black">
+              {problem.answer}
+              {unitLabel ? ` ${unitLabel}` : ""}
+            </span>
           </p>
         </section>
       )}

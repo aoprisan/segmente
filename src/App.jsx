@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import MenuScreen from "./components/MenuScreen";
 import GameScreen from "./components/GameScreen";
 import ResultsScreen from "./components/ResultsScreen";
+import NamePromptScreen from "./components/NamePromptScreen";
 import { createSeededRng, generateSession } from "./utils/problems";
 import {
   applySessionProgress,
@@ -11,13 +12,19 @@ import {
   loadProgress,
   saveProgress,
 } from "./utils/gamification";
+import {
+  clearPlayerName,
+  loadPlayerName,
+  savePlayerName,
+} from "./utils/leaderboard";
 
 export default function App() {
-  const [screen, setScreen] = useState("menu"); // menu | game | results
+  const [screen, setScreen] = useState("menu"); // menu | name-prompt | game | results
   const [sessionConfig, setSessionConfig] = useState(null);
   const [finalResult, setFinalResult] = useState(null);
   const [progress, setProgress] = useState(loadProgress);
   const [gameKey, setGameKey] = useState(0);
+  const [pendingTablaName, setPendingTablaName] = useState("");
 
   const dailyChallengeId = getTodayChallengeKey();
   const bestCategory = getBestCategory(progress);
@@ -32,7 +39,27 @@ export default function App() {
     setGameKey((value) => value + 1);
   }, []);
 
+  const beginTablaSession = useCallback(() => {
+    openSession({
+      category: "tabla",
+      mode: "standard",
+      sessionId: null,
+      sessionLabel: null,
+      problems: generateSession("tabla"),
+    });
+  }, [openSession]);
+
   const startCategoryGame = useCallback((cat) => {
+    if (cat === "tabla") {
+      const cachedName = loadPlayerName();
+      if (!cachedName) {
+        setPendingTablaName("");
+        setScreen("name-prompt");
+        return;
+      }
+      beginTablaSession();
+      return;
+    }
     openSession({
       category: cat,
       mode: "standard",
@@ -40,7 +67,18 @@ export default function App() {
       sessionLabel: null,
       problems: generateSession(cat, 5),
     });
-  }, [openSession]);
+  }, [beginTablaSession, openSession]);
+
+  const handleNameSubmit = useCallback((name) => {
+    savePlayerName(name);
+    setPendingTablaName("");
+    beginTablaSession();
+  }, [beginTablaSession]);
+
+  const handleNameCancel = useCallback(() => {
+    setPendingTablaName("");
+    setScreen("menu");
+  }, []);
 
   const startDailyChallenge = useCallback(() => {
     const sessionId = getTodayChallengeKey();
@@ -69,7 +107,10 @@ export default function App() {
     setScreen("results");
   }, [progress]);
 
-  const goHome = useCallback(() => setScreen("menu"), []);
+  const goHome = useCallback(() => {
+    clearPlayerName();
+    setScreen("menu");
+  }, []);
 
   const replay = useCallback(() => {
     setSessionConfig((currentSession) => {
@@ -118,6 +159,14 @@ export default function App() {
               progress={progress}
               bestCategory={bestCategory}
               dailyChallenge={dailyChallenge}
+            />
+          )}
+
+          {screen === "name-prompt" && (
+            <NamePromptScreen
+              initialName={pendingTablaName}
+              onSubmit={handleNameSubmit}
+              onCancel={handleNameCancel}
             />
           )}
 

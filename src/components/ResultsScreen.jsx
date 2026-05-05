@@ -1,3 +1,11 @@
+import { useEffect, useRef, useState } from "react";
+import {
+  formatElapsedTime,
+  loadLeaderboard,
+  loadPlayerName,
+  saveLeaderboardEntry,
+} from "../utils/leaderboard";
+
 function StarIcon({ filled }) {
   return (
     <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
@@ -26,7 +34,34 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
     totalStarsAdded,
     mode,
     sessionLabel,
+    category,
+    elapsedMs,
+    timedOut,
   } = result;
+
+  const isTabla = category === "tabla";
+  const savedRef = useRef(false);
+  const [leaderboard, setLeaderboard] = useState(() =>
+    isTabla ? loadLeaderboard() : [],
+  );
+  const [highlightRank, setHighlightRank] = useState(null);
+
+  useEffect(() => {
+    if (!isTabla || savedRef.current) {
+      return;
+    }
+    savedRef.current = true;
+    const playerName = loadPlayerName() || "Anonim";
+    const { entries, rank } = saveLeaderboardEntry({
+      name: playerName,
+      score,
+      total,
+      elapsedMs: elapsedMs ?? 0,
+      completedAt: Date.now(),
+    });
+    setLeaderboard(entries);
+    setHighlightRank(rank);
+  }, [isTabla, score, total, elapsedMs]);
 
   let emoji;
   let title;
@@ -130,6 +165,23 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
             {dailyBonusAwarded ? "Bonusul zilnic a fost adăugat." : "Bonusul zilnic a fost deja revendicat astăzi."}
           </p>
         )}
+        {isTabla && (
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <span className="status-chip bg-kid-teal-light text-kid-teal-dark">
+              Timp: {formatElapsedTime(elapsedMs ?? 0)}
+            </span>
+            {timedOut && (
+              <span className="status-chip bg-kid-coral-light text-kid-coral-dark">
+                Timpul s-a scurs!
+              </span>
+            )}
+            {highlightRank && (
+              <span className="status-chip bg-kid-amber-light text-kid-amber-dark">
+                Locul #{highlightRank}
+              </span>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="studio-panel px-4 py-4">
@@ -203,6 +255,74 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
         </section>
       )}
 
+      {isTabla && (
+        <section className="studio-panel px-4 py-4 text-left">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-kid-teal-dark">
+                Clasament
+              </p>
+              <h3 className="mt-1 text-lg font-black text-[var(--color-board-ink)]">
+                Cele mai bune scoruri
+              </h3>
+            </div>
+            <span className="status-chip bg-kid-teal-light text-kid-teal-dark">
+              Top 10
+            </span>
+          </div>
+
+          {leaderboard.length === 0 ? (
+            <p className="mt-4 rounded-[22px] bg-kid-teal-light px-4 py-4 text-sm font-semibold text-kid-teal-dark">
+              Nu există încă scoruri salvate.
+            </p>
+          ) : (
+            <ol className="mt-3 space-y-2">
+              {leaderboard.map((entry, i) => {
+                const isCurrent = highlightRank === i + 1;
+                return (
+                  <li
+                    key={`${entry.completedAt}-${i}`}
+                    className={`flex items-center justify-between gap-3 rounded-[22px] px-4 py-3 ${
+                      isCurrent
+                        ? "border border-kid-teal bg-kid-teal-light"
+                        : "bg-white/85 shadow-[inset_0_0_0_1px_rgba(232,218,192,0.6)]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-black ${
+                          isCurrent
+                            ? "bg-kid-teal text-white"
+                            : "bg-kid-teal-light text-kid-teal-dark"
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
+                      <span className="text-sm font-black text-[var(--color-board-ink)]">
+                        {entry.name}
+                        {isCurrent && (
+                          <span className="ml-2 text-[10px] font-black uppercase tracking-[0.18em] text-kid-teal-dark">
+                            Tu
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="status-chip bg-kid-green-light text-kid-green-dark">
+                        {entry.score}/{entry.total}
+                      </span>
+                      <span className="status-chip bg-kid-amber-light text-kid-amber-dark">
+                        {formatElapsedTime(entry.elapsedMs)}
+                      </span>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
+      )}
+
       <div className="space-y-2">
         <button
           onClick={onHome}
@@ -212,9 +332,11 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
         </button>
         <button
           onClick={onReplay}
-          className="action-secondary studio-button w-full border border-[var(--color-board-line)] bg-white/90 text-kid-purple-dark"
+          className={`action-secondary studio-button w-full border border-[var(--color-board-line)] bg-white/90 ${
+            isTabla ? "text-kid-teal-dark" : "text-kid-purple-dark"
+          }`}
         >
-          Joacă din nou
+          {isTabla ? "Sesiune nouă" : "Joacă din nou"}
         </button>
       </div>
     </div>
