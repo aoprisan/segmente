@@ -19,6 +19,22 @@ const COPY = {
     inputText: "text-kid-pink-dark",
     cancelText: "text-kid-pink-dark",
   },
+  romanToArabic: {
+    kicker: "Numere romane → arabe",
+    description:
+      "Numele tău apare în clasament după fiecare sesiune. 10 exerciții în 5 minute — gata, start!",
+    button: "bg-kid-purple",
+    inputText: "text-kid-purple-dark",
+    cancelText: "text-kid-purple-dark",
+  },
+  arabicToRoman: {
+    kicker: "Numere arabe → romane",
+    description:
+      "Numele tău apare în clasament după fiecare sesiune. 10 exerciții în 5 minute — gata, start!",
+    button: "bg-kid-red",
+    inputText: "text-kid-red-dark",
+    cancelText: "text-kid-red-dark",
+  },
 };
 
 export default function NamePromptScreen({

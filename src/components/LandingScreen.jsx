@@ -50,6 +50,76 @@ const ordineaIcon = (
   </svg>
 );
 
+const romanToArabicIcon = (
+  <svg width="48" height="48" viewBox="0 0 48 48">
+    <text
+      x="14"
+      y="30"
+      textAnchor="middle"
+      fontSize="18"
+      fontWeight="800"
+      fill="#3C3489"
+    >
+      XII
+    </text>
+    <text
+      x="30"
+      y="22"
+      textAnchor="middle"
+      fontSize="11"
+      fontWeight="800"
+      fill="#7F77DD"
+    >
+      →
+    </text>
+    <text
+      x="38"
+      y="34"
+      textAnchor="middle"
+      fontSize="16"
+      fontWeight="800"
+      fill="#3C3489"
+    >
+      12
+    </text>
+  </svg>
+);
+
+const arabicToRomanIcon = (
+  <svg width="48" height="48" viewBox="0 0 48 48">
+    <text
+      x="12"
+      y="30"
+      textAnchor="middle"
+      fontSize="16"
+      fontWeight="800"
+      fill="#A32D2D"
+    >
+      27
+    </text>
+    <text
+      x="24"
+      y="22"
+      textAnchor="middle"
+      fontSize="11"
+      fontWeight="800"
+      fill="#E24B4A"
+    >
+      →
+    </text>
+    <text
+      x="36"
+      y="32"
+      textAnchor="middle"
+      fontSize="14"
+      fontWeight="800"
+      fill="#A32D2D"
+    >
+      XXVII
+    </text>
+  </svg>
+);
+
 function LeaderboardSection({
   title,
   subtitle,
@@ -113,13 +183,19 @@ export default function LandingScreen({
   onChooseSegmente,
   onChooseTabla,
   onChooseOrdinea,
+  onChooseRomanToArabic,
+  onChooseArabicToRoman,
 }) {
   const [tablaLeaderboard, setTablaLeaderboard] = useState([]);
   const [ordineaLeaderboard, setOrdineaLeaderboard] = useState([]);
+  const [romanToArabicLeaderboard, setRomanToArabicLeaderboard] = useState([]);
+  const [arabicToRomanLeaderboard, setArabicToRomanLeaderboard] = useState([]);
 
   useEffect(() => {
     setTablaLeaderboard(loadLeaderboard("tabla"));
     setOrdineaLeaderboard(loadLeaderboard("ordinea"));
+    setRomanToArabicLeaderboard(loadLeaderboard("romanToArabic"));
+    setArabicToRomanLeaderboard(loadLeaderboard("arabicToRoman"));
   }, []);
 
   return (
@@ -188,6 +264,42 @@ export default function LandingScreen({
             Începe
           </span>
         </button>
+
+        <button
+          onClick={onChooseRomanToArabic}
+          className="studio-panel studio-button flex min-h-[170px] flex-col items-start rounded-[26px] border border-kid-purple p-5 text-left"
+        >
+          <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-kid-purple-light">
+            {romanToArabicIcon}
+          </span>
+          <span className="text-lg font-black text-kid-purple-dark">
+            Numere romane → arabe
+          </span>
+          <span className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+            10 exerciții în 5 minute. Citește cifrele romane și scrie numărul.
+          </span>
+          <span className="mt-auto inline-flex rounded-full bg-kid-purple-light px-4 py-1.5 text-xs font-black text-kid-purple-dark">
+            Începe
+          </span>
+        </button>
+
+        <button
+          onClick={onChooseArabicToRoman}
+          className="studio-panel studio-button flex min-h-[170px] flex-col items-start rounded-[26px] border border-kid-red p-5 text-left"
+        >
+          <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-kid-red-light">
+            {arabicToRomanIcon}
+          </span>
+          <span className="text-lg font-black text-kid-red-dark">
+            Numere arabe → romane
+          </span>
+          <span className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+            10 exerciții în 5 minute. Scrie numărul cu cifre romane.
+          </span>
+          <span className="mt-auto inline-flex rounded-full bg-kid-red-light px-4 py-1.5 text-xs font-black text-kid-red-dark">
+            Începe
+          </span>
+        </button>
       </div>
 
       <LeaderboardSection
@@ -206,6 +318,24 @@ export default function LandingScreen({
         emptyText="Nu există încă scoruri. Joacă ordinea operațiilor și fii primul!"
         accentSoft="bg-kid-pink-light"
         accentText="text-kid-pink-dark"
+      />
+
+      <LeaderboardSection
+        title="Numere romane → arabe"
+        subtitle="10 exerciții, 5 minute pe sesiune."
+        entries={romanToArabicLeaderboard}
+        emptyText="Nu există încă scoruri. Citește cifre romane și fii primul!"
+        accentSoft="bg-kid-purple-light"
+        accentText="text-kid-purple-dark"
+      />
+
+      <LeaderboardSection
+        title="Numere arabe → romane"
+        subtitle="10 exerciții, 5 minute pe sesiune."
+        entries={arabicToRomanLeaderboard}
+        emptyText="Nu există încă scoruri. Scrie cu cifre romane și fii primul!"
+        accentSoft="bg-kid-red-light"
+        accentText="text-kid-red-dark"
       />
     </div>
   );

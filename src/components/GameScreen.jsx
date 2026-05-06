@@ -2,11 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import DrawingCanvas from "./DrawingCanvas";
 import TablaVisual from "./TablaVisual";
 import OrdineaVisual from "./OrdineaVisual";
+import RomanNumeralVisual from "./RomanNumeralVisual";
 import { buildSessionResult } from "../utils/gamification";
 import { formatElapsedTime } from "../utils/leaderboard";
 
 const TIMED_TIME_LIMIT_MS = 5 * 60 * 1000;
-const SESSION_TIMED_CATEGORIES = new Set(["tabla"]);
+const SESSION_TIMED_CATEGORIES = new Set([
+  "tabla",
+  "romanToArabic",
+  "arabicToRoman",
+]);
 const EXERCISE_TIMED_CATEGORIES = new Set(["ordinea"]);
 
 const CAT_LABELS = {
@@ -16,6 +21,8 @@ const CAT_LABELS = {
   mixt: "Mixt",
   tabla: "Tabla înmulțirii",
   ordinea: "Ordinea operațiilor",
+  romanToArabic: "Numere romane → arabe",
+  arabicToRoman: "Numere arabe → romane",
 };
 
 const CAT_COLORS = {
@@ -55,16 +62,32 @@ const CAT_COLORS = {
     border: "border-kid-pink",
     text: "text-kid-pink-dark",
   },
+  romanToArabic: {
+    bg: "bg-kid-purple",
+    soft: "bg-kid-purple-light",
+    border: "border-kid-purple",
+    text: "text-kid-purple-dark",
+  },
+  arabicToRoman: {
+    bg: "bg-kid-red",
+    soft: "bg-kid-red-light",
+    border: "border-kid-red",
+    text: "text-kid-red-dark",
+  },
 };
 
 const TIMER_BORDER_BY_CATEGORY = {
   tabla: "border-kid-teal bg-kid-teal-light",
   ordinea: "border-kid-pink bg-kid-pink-light",
+  romanToArabic: "border-kid-purple bg-kid-purple-light",
+  arabicToRoman: "border-kid-red bg-kid-red-light",
 };
 
 const TIMER_TEXT_BY_CATEGORY = {
   tabla: "text-kid-teal-dark",
   ordinea: "text-kid-pink-dark",
+  romanToArabic: "text-kid-purple-dark",
+  arabicToRoman: "text-kid-red-dark",
 };
 
 const MOBILE_BREAKPOINT = 640;
@@ -104,10 +127,14 @@ export default function GameScreen({
   const finishedRef = useRef(false);
   const isTabla = category === "tabla";
   const isOrdinea = category === "ordinea";
+  const isRomanToArabic = category === "romanToArabic";
+  const isArabicToRoman = category === "arabicToRoman";
+  const isRomanNumeral = isRomanToArabic || isArabicToRoman;
+  const isStringAnswer = isArabicToRoman;
   const isSessionTimed = SESSION_TIMED_CATEGORIES.has(category);
   const isExerciseTimed = EXERCISE_TIMED_CATEGORIES.has(category);
   const isTimed = isSessionTimed || isExerciseTimed;
-  const isArithmetic = isTabla || isOrdinea;
+  const isArithmetic = isTabla || isOrdinea || isRomanNumeral;
   const unitLabel = isArithmetic ? null : "cm";
   const [remainingMs, setRemainingMs] = useState(
     isTimed ? TIMED_TIME_LIMIT_MS : 0,
@@ -212,12 +239,23 @@ export default function GameScreen({
   }
 
   function handleCheck() {
-    const val = parseInt(answer, 10);
-    if (isNaN(val)) {
-      setFeedback("empty");
-      return;
+    let isCorrect;
+    if (isStringAnswer) {
+      const normalized = answer.trim().toUpperCase();
+      if (!normalized) {
+        setFeedback("empty");
+        return;
+      }
+      isCorrect = normalized === problem.answer;
+    } else {
+      const val = parseInt(answer, 10);
+      if (isNaN(val)) {
+        setFeedback("empty");
+        return;
+      }
+      isCorrect = val === problem.answer;
     }
-    if (val === problem.answer) {
+    if (isCorrect) {
       scoreRef.current += 1;
       setScore(scoreRef.current);
       currentStreakRef.current += 1;
@@ -435,6 +473,8 @@ export default function GameScreen({
         <TablaVisual problem={problem} />
       ) : isOrdinea ? (
         <OrdineaVisual problem={problem} />
+      ) : isRomanNumeral ? (
+        <RomanNumeralVisual problem={problem} />
       ) : (
         <DrawingCanvas ref={canvasRef} problem={problem} />
       )}
@@ -462,7 +502,11 @@ export default function GameScreen({
                 ? "Scrie rezultatul înmulțirii."
                 : isOrdinea
                   ? "Scrie rezultatul calculului."
-                  : "Scrie rezultatul în centimetri."}
+                  : isRomanToArabic
+                    ? "Scrie numărul cu cifre arabe."
+                    : isArabicToRoman
+                      ? "Scrie numărul cu cifre romane."
+                      : "Scrie rezultatul în centimetri."}
               </p>
             </div>
             <span className={`status-chip ${catColor.soft} ${catColor.text}`}>
@@ -472,11 +516,21 @@ export default function GameScreen({
 
           <div className="mt-4 flex items-center gap-3">
             <input
-              type="number"
-              inputMode="numeric"
+              type={isStringAnswer ? "text" : "number"}
+              inputMode={isStringAnswer ? "text" : "numeric"}
               value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
+              onChange={(e) =>
+                setAnswer(
+                  isStringAnswer
+                    ? e.target.value.toUpperCase()
+                    : e.target.value,
+                )
+              }
               placeholder="?"
+              autoCapitalize={isStringAnswer ? "characters" : undefined}
+              autoCorrect={isStringAnswer ? "off" : undefined}
+              spellCheck={isStringAnswer ? false : undefined}
+              maxLength={isStringAnswer ? 12 : undefined}
               className={`h-14 flex-1 rounded-[22px] border border-[#DCCDB1] bg-[#FFFDF8] px-4 text-center text-2xl font-black ${catColor.text} outline-none transition focus:border-[var(--color-board-ink)] focus:bg-white`}
             />
             {unitLabel && (
@@ -488,7 +542,9 @@ export default function GameScreen({
 
           {feedback === "empty" && (
             <p className="mt-3 text-center text-xs font-black text-kid-coral-dark">
-              Scrie un număr în căsuță.
+              {isStringAnswer
+                ? "Scrie un răspuns în căsuță."
+                : "Scrie un număr în căsuță."}
             </p>
           )}
 

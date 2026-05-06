@@ -51,7 +51,12 @@ export default function App() {
   }, [openSession]);
 
   const startCategoryGame = useCallback((cat) => {
-    if (cat === "tabla" || cat === "ordinea") {
+    if (
+      cat === "tabla" ||
+      cat === "ordinea" ||
+      cat === "romanToArabic" ||
+      cat === "arabicToRoman"
+    ) {
       const cachedName = loadPlayerName();
       if (!cachedName) {
         setPendingNameCategory(cat);
@@ -86,6 +91,14 @@ export default function App() {
   const goToLanding = useCallback(() => setScreen("landing"), []);
   const goToTabla = useCallback(() => startCategoryGame("tabla"), [startCategoryGame]);
   const goToOrdinea = useCallback(() => startCategoryGame("ordinea"), [startCategoryGame]);
+  const goToRomanToArabic = useCallback(
+    () => startCategoryGame("romanToArabic"),
+    [startCategoryGame],
+  );
+  const goToArabicToRoman = useCallback(
+    () => startCategoryGame("arabicToRoman"),
+    [startCategoryGame],
+  );
 
   const startDailyChallenge = useCallback(() => {
     const sessionId = getTodayChallengeKey();
@@ -133,7 +146,12 @@ export default function App() {
         };
       }
 
-      if (currentSession.category === "tabla" || currentSession.category === "ordinea") {
+      if (
+        currentSession.category === "tabla" ||
+        currentSession.category === "ordinea" ||
+        currentSession.category === "romanToArabic" ||
+        currentSession.category === "arabicToRoman"
+      ) {
         return {
           ...currentSession,
           problems: generateSession(currentSession.category),
@@ -171,6 +189,8 @@ export default function App() {
               onChooseSegmente={goToSegmenteMenu}
               onChooseTabla={goToTabla}
               onChooseOrdinea={goToOrdinea}
+              onChooseRomanToArabic={goToRomanToArabic}
+              onChooseArabicToRoman={goToArabicToRoman}
             />
           )}
 

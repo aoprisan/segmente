@@ -7,6 +7,8 @@ export const CATEGORY_LABELS = {
   mixt: "Probleme mixte",
   tabla: "Tabla înmulțirii",
   ordinea: "Ordinea operațiilor",
+  romanToArabic: "Numere romane → arabe",
+  arabicToRoman: "Numere arabe → romane",
 };
 
 const CATEGORY_IDS = Object.keys(CATEGORY_LABELS);
@@ -51,6 +53,16 @@ const ACHIEVEMENT_DEFINITIONS = {
     id: "perfect_ordinea",
     title: "Stăpân al ordinii",
     description: "Ai rezolvat corect toate cele 10 probleme cu ordinea operațiilor.",
+  },
+  perfect_romanToArabic: {
+    id: "perfect_romanToArabic",
+    title: "Cititor de cifre romane",
+    description: "Ai citit corect toate cele 10 numere romane.",
+  },
+  perfect_arabicToRoman: {
+    id: "perfect_arabicToRoman",
+    title: "Scrib roman",
+    description: "Ai scris corect toate cele 10 numere cu cifre romane.",
   },
 };
 

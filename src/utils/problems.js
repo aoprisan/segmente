@@ -1,3 +1,8 @@
+import {
+  generateArabicToRomanSession,
+  generateRomanToArabicSession,
+} from "./romanNumerals";
+
 const NAMES = [
   ["Ana", "Bogdan"],
   ["Maria", "Costin"],
@@ -434,6 +439,12 @@ export function generateSession(category, count = 5, rng = Math.random) {
   }
   if (category === "ordinea") {
     return generateOrdineaSession(rng);
+  }
+  if (category === "romanToArabic") {
+    return generateRomanToArabicSession(rng);
+  }
+  if (category === "arabicToRoman") {
+    return generateArabicToRomanSession(rng);
   }
   return Array.from({ length: count }, () => generateProblem(category, rng));
 }

@@ -1,6 +1,8 @@
 const LEADERBOARD_KEYS = {
   tabla: "segmente-tabla-leaderboard-v1",
   ordinea: "segmente-ordinea-leaderboard-v1",
+  romanToArabic: "segmente-roman-to-arabic-leaderboard-v1",
+  arabicToRoman: "segmente-arabic-to-roman-leaderboard-v1",
 };
 const DEFAULT_LEADERBOARD_CATEGORY = "tabla";
 const PLAYER_NAME_KEY = "segmente-tabla-player-name-v1";

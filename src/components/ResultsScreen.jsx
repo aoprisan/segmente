@@ -6,6 +6,47 @@ import {
   saveLeaderboardEntry,
 } from "../utils/leaderboard";
 
+const ACCENT_BY_CATEGORY = {
+  tabla: {
+    kicker: "text-kid-teal-dark",
+    soft: "bg-kid-teal-light",
+    softText: "text-kid-teal-dark",
+    border: "border-kid-teal",
+    chip: "bg-kid-teal-light text-kid-teal-dark",
+    rankBg: "bg-kid-teal",
+    timeChip: "bg-kid-teal-light text-kid-teal-dark",
+  },
+  ordinea: {
+    kicker: "text-kid-pink-dark",
+    soft: "bg-kid-pink-light",
+    softText: "text-kid-pink-dark",
+    border: "border-kid-pink",
+    chip: "bg-kid-pink-light text-kid-pink-dark",
+    rankBg: "bg-kid-pink",
+    timeChip: "bg-kid-pink-light text-kid-pink-dark",
+  },
+  romanToArabic: {
+    kicker: "text-kid-purple-dark",
+    soft: "bg-kid-purple-light",
+    softText: "text-kid-purple-dark",
+    border: "border-kid-purple",
+    chip: "bg-kid-purple-light text-kid-purple-dark",
+    rankBg: "bg-kid-purple",
+    timeChip: "bg-kid-purple-light text-kid-purple-dark",
+  },
+  arabicToRoman: {
+    kicker: "text-kid-red-dark",
+    soft: "bg-kid-red-light",
+    softText: "text-kid-red-dark",
+    border: "border-kid-red",
+    chip: "bg-kid-red-light text-kid-red-dark",
+    rankBg: "bg-kid-red",
+    timeChip: "bg-kid-red-light text-kid-red-dark",
+  },
+};
+
+const TIMED_CATEGORIES = new Set(Object.keys(ACCENT_BY_CATEGORY));
+
 function StarIcon({ filled }) {
   return (
     <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
@@ -39,29 +80,10 @@ export default function ResultsScreen({ result, onHome, onReplay }) {
     timedOut,
   } = result;
 
-  const isTabla = category === "tabla";
-  const isOrdinea = category === "ordinea";
-  const isTimed = isTabla || isOrdinea;
-  const leaderboardCategory = isOrdinea ? "ordinea" : "tabla";
-  const leaderboardAccent = isOrdinea
-    ? {
-        kicker: "text-kid-pink-dark",
-        soft: "bg-kid-pink-light",
-        softText: "text-kid-pink-dark",
-        border: "border-kid-pink",
-        chip: "bg-kid-pink-light text-kid-pink-dark",
-        rankBg: "bg-kid-pink",
-        timeChip: "bg-kid-pink-light text-kid-pink-dark",
-      }
-    : {
-        kicker: "text-kid-teal-dark",
-        soft: "bg-kid-teal-light",
-        softText: "text-kid-teal-dark",
-        border: "border-kid-teal",
-        chip: "bg-kid-teal-light text-kid-teal-dark",
-        rankBg: "bg-kid-teal",
-        timeChip: "bg-kid-teal-light text-kid-teal-dark",
-      };
+  const isTimed = TIMED_CATEGORIES.has(category);
+  const leaderboardCategory = isTimed ? category : "tabla";
+  const leaderboardAccent =
+    ACCENT_BY_CATEGORY[category] ?? ACCENT_BY_CATEGORY.tabla;
   const savedRef = useRef(false);
   const [leaderboard, setLeaderboard] = useState(() =>
     isTimed ? loadLeaderboard(leaderboardCategory) : [],
