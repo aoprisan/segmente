@@ -1,11 +1,3 @@
-const LEGEND = [
-  { roman: "I", arabic: 1 },
-  { roman: "V", arabic: 5 },
-  { roman: "X", arabic: 10 },
-  { roman: "L", arabic: 50 },
-  { roman: "C", arabic: 100 },
-];
-
 const COLORS_BY_CATEGORY = {
   romanToArabic: {
     kicker: "text-kid-purple-dark",
@@ -40,25 +32,6 @@ export default function RomanNumeralVisual({ problem }) {
         >
           {problem?.question}
         </span>
-      </div>
-
-      <div className="mt-4">
-        <p className="text-center text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
-          Cifrele romane
-        </p>
-        <div className="mt-2 flex flex-wrap justify-center gap-2">
-          {LEGEND.map(({ roman, arabic }) => (
-            <span
-              key={roman}
-              className="inline-flex items-baseline gap-1.5 rounded-full bg-white/70 px-3 py-1 text-sm font-black text-slate-600 shadow-[inset_0_0_0_1px_rgba(232,218,192,0.7)]"
-            >
-              <span className={colors.text}>{roman}</span>
-              <span className="text-xs font-semibold text-slate-400">
-                = {arabic}
-              </span>
-            </span>
-          ))}
-        </div>
       </div>
     </section>
   );
