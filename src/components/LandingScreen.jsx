@@ -120,6 +120,14 @@ const arabicToRomanIcon = (
   </svg>
 );
 
+const statsIcon = (
+  <svg width="48" height="48" viewBox="0 0 48 48">
+    <rect x="8" y="28" width="7" height="14" rx="2" fill="#C9831F" />
+    <rect x="20" y="18" width="7" height="24" rx="2" fill="#E0A93D" />
+    <rect x="32" y="10" width="7" height="32" rx="2" fill="#F5C863" />
+  </svg>
+);
+
 function LeaderboardSection({
   title,
   subtitle,
@@ -185,6 +193,7 @@ export default function LandingScreen({
   onChooseOrdinea,
   onChooseRomanToArabic,
   onChooseArabicToRoman,
+  onChooseStats,
 }) {
   const [tablaLeaderboard, setTablaLeaderboard] = useState([]);
   const [ordineaLeaderboard, setOrdineaLeaderboard] = useState([]);
@@ -300,6 +309,26 @@ export default function LandingScreen({
             Începe
           </span>
         </button>
+
+        {onChooseStats && (
+          <button
+            onClick={onChooseStats}
+            className="studio-panel studio-button flex min-h-[170px] flex-col items-start rounded-[26px] border border-kid-amber p-5 text-left"
+          >
+            <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-kid-amber-light">
+              {statsIcon}
+            </span>
+            <span className="text-lg font-black text-kid-amber-dark">
+              Statisticile tale
+            </span>
+            <span className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+              Vezi cât ai exersat și cu ce categorii te descurci cel mai bine.
+            </span>
+            <span className="mt-auto inline-flex rounded-full bg-kid-amber-light px-4 py-1.5 text-xs font-black text-kid-amber-dark">
+              Vezi statistici
+            </span>
+          </button>
+        )}
       </div>
 
       <LeaderboardSection
