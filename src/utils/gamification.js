@@ -4,6 +4,9 @@ export const CATEGORY_LABELS = {
   suma: "Suma segmentelor",
   diferenta: "Diferența segmentelor",
   dublu: "Dublu / Jumătate",
+  comparatie: "Sumă și diferență",
+  raport: "Sumă și raport",
+  trei: "Trei segmente",
   mixt: "Probleme mixte",
   tabla: "Tabla înmulțirii",
   ordinea: "Ordinea operațiilor",
@@ -38,6 +41,21 @@ const ACHIEVEMENT_DEFINITIONS = {
     id: "perfect_dublu",
     title: "Perfect la dublu",
     description: "Ai rezolvat perfect o rundă din categoria Dublu / Jumătate.",
+  },
+  perfect_comparatie: {
+    id: "perfect_comparatie",
+    title: "Perfect la comparație",
+    description: "Ai rezolvat perfect o rundă din categoria Sumă și diferență.",
+  },
+  perfect_raport: {
+    id: "perfect_raport",
+    title: "Perfect la raport",
+    description: "Ai rezolvat perfect o rundă din categoria Sumă și raport.",
+  },
+  perfect_trei: {
+    id: "perfect_trei",
+    title: "Perfect la trei segmente",
+    description: "Ai rezolvat perfect o rundă din categoria Trei segmente.",
   },
   perfect_mixt: {
     id: "perfect_mixt",

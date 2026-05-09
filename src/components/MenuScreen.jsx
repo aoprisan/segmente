@@ -52,6 +52,53 @@ const categories = [
     ),
   },
   {
+    id: "comparatie",
+    label: "Sumă și diferență",
+    borderClass: "border-kid-amber",
+    lightClass: "bg-kid-amber-light",
+    textClass: "text-kid-amber-dark",
+    description: "Suma a două segmente, când unul e cu N cm mai lung.",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 36 36">
+        <line x1="4" y1="13" x2="30" y2="13" stroke="#EF9F27" strokeWidth="3" strokeLinecap="round" />
+        <line x1="4" y1="25" x2="22" y2="25" stroke="#F6C26B" strokeWidth="3" strokeLinecap="round" />
+        <line x1="22" y1="13" x2="30" y2="13" stroke="#854F0B" strokeWidth="1" strokeDasharray="2 2" />
+        <text x="26" y="10" textAnchor="middle" fontSize="8" fontWeight="700" fill="#854F0B">+N</text>
+      </svg>
+    ),
+  },
+  {
+    id: "raport",
+    label: "Sumă și raport",
+    borderClass: "border-kid-teal",
+    lightClass: "bg-kid-teal-light",
+    textClass: "text-kid-teal-dark",
+    description: "Un segment e de N ori mai lung — împarte totalul.",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 36 36">
+        <line x1="4" y1="13" x2="10" y2="13" stroke="#1D9E75" strokeWidth="3" strokeLinecap="round" />
+        <line x1="4" y1="25" x2="32" y2="25" stroke="#3FCB9A" strokeWidth="3" strokeLinecap="round" />
+        <text x="7" y="10" textAnchor="middle" fontSize="8" fontWeight="700" fill="#085041">×1</text>
+        <text x="18" y="33" textAnchor="middle" fontSize="8" fontWeight="700" fill="#085041">×N</text>
+      </svg>
+    ),
+  },
+  {
+    id: "trei",
+    label: "Trei segmente",
+    borderClass: "border-kid-pink",
+    lightClass: "bg-kid-pink-light",
+    textClass: "text-kid-pink-dark",
+    description: "Trei mărimi cu raporturi — împarte în părți egale.",
+    icon: (
+      <svg width="36" height="36" viewBox="0 0 36 36">
+        <line x1="4" y1="9" x2="10" y2="9" stroke="#D4537E" strokeWidth="2.5" strokeLinecap="round" />
+        <line x1="4" y1="19" x2="20" y2="19" stroke="#E984A8" strokeWidth="2.5" strokeLinecap="round" />
+        <line x1="4" y1="29" x2="32" y2="29" stroke="#F4B5CC" strokeWidth="2.5" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     id: "mixt",
     label: "Probleme mixte",
     borderClass: "border-kid-purple",

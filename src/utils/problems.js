@@ -76,8 +76,97 @@ export function generateProblem(category, rng = Math.random) {
   const obj = pick(OBJECTS, rng);
 
   if (category === "mixt") {
-    const cats = ["suma", "diferenta", "dublu"];
+    const cats = ["suma", "diferenta", "dublu", "comparatie", "raport", "trei"];
     return generateProblem(pick(cats, rng), rng);
+  }
+
+  if (category === "comparatie") {
+    const small = rand(5, 25, rng);
+    const diff = rand(3, 18, rng);
+    const big = small + diff;
+    const total = small + big;
+    return {
+      category: "comparatie",
+      text: `${n1} și ${n2} au împreună două segmente lungi de ${total} cm. Segmentul lui ${n1} este cu ${diff} cm mai lung decât al lui ${n2}.`,
+      question: `Cât măsoară segmentul mai scurt (al lui ${n2})?`,
+      answer: small,
+      hint: `Dacă scoți diferența din total, rămân două segmente egale: (${total} − ${diff}) ÷ 2.`,
+      steps: [
+        `Total = ${total} cm, diferență = ${diff} cm`,
+        `Scoatem diferența: ${total} − ${diff} = ${total - diff}`,
+        `Cele două segmente egale: ${total - diff} ÷ 2 = ${small} cm`,
+        `Segmentul mai lung: ${small} + ${diff} = ${big} cm`,
+      ],
+      segments: [
+        { label: `${n1}: ${big} cm`, length: big, color: "blue" },
+        { label: `${n2}: ${small} cm`, length: small, color: "coral" },
+      ],
+    };
+  }
+
+  if (category === "raport") {
+    const small = rand(4, 12, rng);
+    const mult = rand(2, 6, rng);
+    const big = small * mult;
+    const total = small + big;
+    const parts = mult + 1;
+    return {
+      category: "raport",
+      text: `${n1} și ${n2} au împreună două segmente lungi de ${total} cm. Segmentul lui ${n1} este de ${mult} ori mai lung decât al lui ${n2}.`,
+      question: `Cât măsoară segmentul mai scurt (al lui ${n2})?`,
+      answer: small,
+      hint: `Împarte totalul în ${parts} părți egale: ${total} ÷ ${parts}.`,
+      steps: [
+        `Segmentul mic = 1 parte, segmentul mare = ${mult} părți`,
+        `Total = ${parts} părți = ${total} cm`,
+        `1 parte = ${total} ÷ ${parts} = ${small} cm`,
+        `Segmentul mare = ${mult} × ${small} = ${big} cm`,
+      ],
+      segments: [
+        { label: `${n2}: ${small} cm`, length: small, color: "coral" },
+        { label: `${n1}: ${big} cm`, length: big, color: "blue" },
+      ],
+    };
+  }
+
+  if (category === "trei") {
+    const part = rand(4, 10, rng);
+    const m2 = rand(2, 4, rng);
+    const m3 = rand(m2 + 1, m2 + 3, rng);
+    const a = part;
+    const b = part * m2;
+    const c = part * m3;
+    const total = a + b + c;
+    const [n3] = pick(NAMES, rng);
+    const things = pick(
+      [
+        { plural: "flori", short: "florile" },
+        { plural: "stickere", short: "stickerele" },
+        { plural: "bile", short: "bilele" },
+        { plural: "cărți", short: "cărțile" },
+        { plural: "mărgele", short: "mărgelele" },
+      ],
+      rng,
+    );
+    const parts = 1 + m2 + m3;
+    return {
+      category: "trei",
+      text: `${n1}, ${n2} și ${n3} au împreună ${total} ${things.plural}. ${n2} are de ${m2} ori mai multe decât ${n1}, iar ${n3} are de ${m3} ori mai multe decât ${n1}.`,
+      question: `Câte ${things.plural} are ${n1}?`,
+      answer: a,
+      hint: `Împarte totalul în ${parts} părți egale: 1 (pentru ${n1}) + ${m2} + ${m3}.`,
+      steps: [
+        `${n1} = 1 parte, ${n2} = ${m2} părți, ${n3} = ${m3} părți`,
+        `Total = ${parts} părți = ${total}`,
+        `1 parte = ${total} ÷ ${parts} = ${a}`,
+        `${n2} = ${m2} × ${a} = ${b}, ${n3} = ${m3} × ${a} = ${c}`,
+      ],
+      segments: [
+        { label: `${n1}: ${a}`, length: a, color: "teal" },
+        { label: `${n2}: ${b}`, length: b, color: "purple" },
+        { label: `${n3}: ${c}`, length: c, color: "amber" },
+      ],
+    };
   }
 
   if (category === "suma") {
