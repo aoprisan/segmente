@@ -96,6 +96,22 @@ export function getGuideSegments(problem, width) {
     ];
   }
 
+  if (
+    problem.category === "comparatie" ||
+    problem.category === "raport" ||
+    problem.category === "trei"
+  ) {
+    const scale = availableWidth / maxLength;
+    const x1 = margin;
+    return problem.segments.map((segment, index) => ({
+      id: `guide-${index + 1}`,
+      x1,
+      x2: x1 + toPixels(segment.length, scale),
+      y: topRow + rowGap * index,
+      color: segment.color,
+    }));
+  }
+
   const scale = availableWidth / maxLength;
   const x1 = margin;
   return [
@@ -115,6 +131,18 @@ export function getGuideMessage(problem) {
 
   if (problem.category === "diferenta") {
     return "Pentru diferență, pornește segmentele din același punct pe două linii apropiate.";
+  }
+
+  if (problem.category === "comparatie") {
+    return "Desenează cele două segmente unul sub altul, plecând din același punct. Marchează cu o acoladă diferența.";
+  }
+
+  if (problem.category === "raport") {
+    return "Desenează segmentul mic, apoi pe cel mare format din mai multe părți egale, ca în model.";
+  }
+
+  if (problem.category === "trei") {
+    return "Desenează cele trei segmente unul sub altul, fiecare împărțit în părți egale.";
   }
 
   return "Pentru dublu sau jumătate, copiază segmentul sau împarte-l în două părți egale.";
