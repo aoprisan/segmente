@@ -75,6 +75,29 @@ function createCategoryBestStars() {
   }, {});
 }
 
+function createCategoryStats() {
+  return CATEGORY_IDS.reduce((acc, categoryId) => {
+    acc[categoryId] = { problems: 0, correct: 0, sessions: 0, elapsedMs: 0 };
+    return acc;
+  }, {});
+}
+
+export function createEmptyStats() {
+  return {
+    totalProblems: 0,
+    totalCorrect: 0,
+    totalHintsUsed: 0,
+    totalElapsedMs: 0,
+    firstPlayedAt: null,
+    lastPlayedDate: null,
+    currentStreak: 0,
+    longestStreak: 0,
+    daysActive: {},
+    perCategory: createCategoryStats(),
+    recentSessions: [],
+  };
+}
+
 export function createEmptyProgress() {
   return {
     totalStars: 0,
@@ -83,6 +106,7 @@ export function createEmptyProgress() {
     badges: [],
     categoryBestStars: createCategoryBestStars(),
     dailyChallengeHistory: {},
+    stats: createEmptyStats(),
   };
 }
 
@@ -102,6 +126,108 @@ function sanitizeCategoryBestStars(raw) {
   });
 
   return base;
+}
+
+const RECENT_SESSIONS_LIMIT = 10;
+
+const SESSION_MODES = new Set(["standard", "daily"]);
+
+function toTimestamp(value) {
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : null;
+}
+
+function isValidDateKey(value) {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+function sanitizeDaysActive(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return {};
+  }
+  return Object.keys(raw).reduce((acc, key) => {
+    if (isValidDateKey(key) && raw[key]) {
+      acc[key] = true;
+    }
+    return acc;
+  }, {});
+}
+
+function sanitizeCategoryStats(raw) {
+  const base = createCategoryStats();
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return base;
+  }
+  CATEGORY_IDS.forEach((categoryId) => {
+    const entry = raw[categoryId];
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      return;
+    }
+    const problems = toCount(entry.problems);
+    base[categoryId] = {
+      problems,
+      correct: Math.min(toCount(entry.correct), problems),
+      sessions: toCount(entry.sessions),
+      elapsedMs: toCount(entry.elapsedMs),
+    };
+  });
+  return base;
+}
+
+function sanitizeRecentSession(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return null;
+  }
+  const total = toCount(raw.total);
+  if (total <= 0 || !CATEGORY_LABELS[raw.category]) {
+    return null;
+  }
+  const completedAt = toTimestamp(raw.completedAt);
+  if (!completedAt) {
+    return null;
+  }
+  return {
+    completedAt,
+    category: raw.category,
+    mode: SESSION_MODES.has(raw.mode) ? raw.mode : "standard",
+    score: Math.min(toCount(raw.score), total),
+    total,
+    hintsUsed: toCount(raw.hintsUsed),
+    bestStreak: toCount(raw.bestStreak),
+    elapsedMs: toCount(raw.elapsedMs),
+    stars: Math.min(toCount(raw.stars), 3),
+  };
+}
+
+function sanitizeRecentSessions(raw) {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw
+    .map(sanitizeRecentSession)
+    .filter(Boolean)
+    .sort((a, b) => b.completedAt - a.completedAt)
+    .slice(0, RECENT_SESSIONS_LIMIT);
+}
+
+function sanitizeStats(raw) {
+  const defaults = createEmptyStats();
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    return defaults;
+  }
+  const totalProblems = toCount(raw.totalProblems);
+  return {
+    totalProblems,
+    totalCorrect: Math.min(toCount(raw.totalCorrect), totalProblems),
+    totalHintsUsed: toCount(raw.totalHintsUsed),
+    totalElapsedMs: toCount(raw.totalElapsedMs),
+    firstPlayedAt: toTimestamp(raw.firstPlayedAt),
+    lastPlayedDate: isValidDateKey(raw.lastPlayedDate) ? raw.lastPlayedDate : null,
+    currentStreak: toCount(raw.currentStreak),
+    longestStreak: toCount(raw.longestStreak),
+    daysActive: sanitizeDaysActive(raw.daysActive),
+    perCategory: sanitizeCategoryStats(raw.perCategory),
+    recentSessions: sanitizeRecentSessions(raw.recentSessions),
+  };
 }
 
 function sanitizeDailyChallengeHistory(raw) {
@@ -143,7 +269,21 @@ function sanitizeProgress(raw) {
     ),
     categoryBestStars: sanitizeCategoryBestStars(raw.categoryBestStars),
     dailyChallengeHistory: sanitizeDailyChallengeHistory(raw.dailyChallengeHistory),
+    stats: sanitizeStats(raw.stats),
   };
+}
+
+function yesterdayKey(todayKey) {
+  if (!isValidDateKey(todayKey)) {
+    return null;
+  }
+  const [year, month, day] = todayKey.split("-").map((part) => Number(part));
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() - 1);
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export function loadProgress() {
@@ -307,6 +447,58 @@ export function applySessionProgress(progress, sessionResult) {
 
   nextProgress.badges = Array.from(nextBadges);
 
+  const stats = nextProgress.stats;
+  const sessionScore = toCount(sessionResult.score);
+  const sessionTotal = toCount(sessionResult.total);
+  const sessionHints = toCount(sessionResult.hintsUsed);
+  const sessionElapsed = toCount(sessionResult.elapsedMs);
+  const completedAt = Date.now();
+
+  stats.totalProblems += sessionTotal;
+  stats.totalCorrect += sessionScore;
+  stats.totalHintsUsed += sessionHints;
+  stats.totalElapsedMs += sessionElapsed;
+
+  if (CATEGORY_LABELS[sessionResult.category]) {
+    const catStats = stats.perCategory[sessionResult.category];
+    catStats.problems += sessionTotal;
+    catStats.correct += sessionScore;
+    catStats.sessions += 1;
+    catStats.elapsedMs += sessionElapsed;
+  }
+
+  if (!stats.firstPlayedAt) {
+    stats.firstPlayedAt = completedAt;
+  }
+
+  const today = getTodayChallengeKey();
+  if (stats.lastPlayedDate === today) {
+    stats.currentStreak = Math.max(stats.currentStreak, 1);
+  } else if (stats.lastPlayedDate && stats.lastPlayedDate === yesterdayKey(today)) {
+    stats.currentStreak += 1;
+  } else {
+    stats.currentStreak = 1;
+  }
+  stats.lastPlayedDate = today;
+  stats.daysActive[today] = true;
+  stats.longestStreak = Math.max(stats.longestStreak, stats.currentStreak);
+
+  const sessionEntry = {
+    completedAt,
+    category: sessionResult.category,
+    mode: SESSION_MODES.has(sessionResult.mode) ? sessionResult.mode : "standard",
+    score: sessionScore,
+    total: sessionTotal,
+    hintsUsed: sessionHints,
+    bestStreak: toCount(sessionResult.bestStreak),
+    elapsedMs: sessionElapsed,
+    stars: Math.min(toCount(sessionResult.stars), 3),
+  };
+  stats.recentSessions = [sessionEntry, ...stats.recentSessions].slice(
+    0,
+    RECENT_SESSIONS_LIMIT,
+  );
+
   return {
     progress: nextProgress,
     dailyBonusAwarded,
@@ -314,6 +506,20 @@ export function applySessionProgress(progress, sessionResult) {
     sessionAchievements: getAchievementDetails(sessionResult.achievements),
     newlyUnlockedBadges: getAchievementDetails(newlyUnlockedIds),
   };
+}
+
+export function getOverallAccuracy(stats) {
+  if (!stats || !stats.totalProblems) {
+    return 0;
+  }
+  return stats.totalCorrect / stats.totalProblems;
+}
+
+export function getDaysActiveCount(stats) {
+  if (!stats || !stats.daysActive) {
+    return 0;
+  }
+  return Object.keys(stats.daysActive).length;
 }
 
 export function getBestCategory(progress) {

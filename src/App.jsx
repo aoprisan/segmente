@@ -4,6 +4,7 @@ import MenuScreen from "./components/MenuScreen";
 import GameScreen from "./components/GameScreen";
 import ResultsScreen from "./components/ResultsScreen";
 import NamePromptScreen from "./components/NamePromptScreen";
+import StatsScreen from "./components/StatsScreen";
 import { createSeededRng, generateSession } from "./utils/problems";
 import {
   applySessionProgress,
@@ -20,7 +21,7 @@ import {
 } from "./utils/leaderboard";
 
 export default function App() {
-  const [screen, setScreen] = useState("landing"); // landing | menu | name-prompt | game | results
+  const [screen, setScreen] = useState("landing"); // landing | menu | name-prompt | game | results | stats
   const [sessionConfig, setSessionConfig] = useState(null);
   const [finalResult, setFinalResult] = useState(null);
   const [progress, setProgress] = useState(loadProgress);
@@ -89,6 +90,7 @@ export default function App() {
 
   const goToSegmenteMenu = useCallback(() => setScreen("menu"), []);
   const goToLanding = useCallback(() => setScreen("landing"), []);
+  const goToStats = useCallback(() => setScreen("stats"), []);
   const goToTabla = useCallback(() => startCategoryGame("tabla"), [startCategoryGame]);
   const goToOrdinea = useCallback(() => startCategoryGame("ordinea"), [startCategoryGame]);
   const goToRomanToArabic = useCallback(
@@ -191,7 +193,12 @@ export default function App() {
               onChooseOrdinea={goToOrdinea}
               onChooseRomanToArabic={goToRomanToArabic}
               onChooseArabicToRoman={goToArabicToRoman}
+              onChooseStats={goToStats}
             />
+          )}
+
+          {screen === "stats" && (
+            <StatsScreen progress={progress} onBack={goToLanding} />
           )}
 
           {screen === "menu" && (
